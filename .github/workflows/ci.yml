@@ -64,7 +64,8 @@ jobs:
         shell: bash
         run: |
           env -i PATH=/usr/bin:/bin LANG=C.UTF-8 python3 -m venv --without-pip .venv
-          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python scripts/check_portable.py --receipt ../portable-checks.json
+          portable_receipt_parent="$(cd .. && pwd -P)"
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python scripts/check_portable.py --receipt "$portable_receipt_parent/portable-checks.json"
       - name: Compile source syntax without running runtime integrations
         working-directory: source
         shell: bash
