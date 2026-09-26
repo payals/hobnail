@@ -66,6 +66,27 @@ jobs:
           env -i PATH=/usr/bin:/bin LANG=C.UTF-8 python3 -m venv --without-pip .venv
           portable_receipt_parent="$(cd .. && pwd -P)"
           env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python scripts/check_portable.py --receipt "$portable_receipt_parent/portable-checks.json"
+      - name: Install the local SDK offline and run the documented first example
+        working-directory: source
+        shell: bash
+        run: |
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -m ensurepip
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -m pip --isolated install --no-index --no-deps --no-build-isolation .
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/hobnail --help
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -I -m hobnail --help
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -I - <<'PY'
+          import sys
+          from pathlib import Path
+          import hobnail
+          from hobnail import discover
+
+          assert Path(hobnail.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+          suggestions = discover(b'{"total":7}')
+          assert suggestions["authoritative"] is False
+          assert [item["plugin"] for item in suggestions["suggestions"]] == ["bytes.sha256", "json.required_fields"]
+          print("Authoritative:", suggestions["authoritative"])
+          print("Suggested checks:", ", ".join(item["plugin"] for item in suggestions["suggestions"]))
+          PY
       - name: Compile source syntax without running runtime integrations
         working-directory: source
         shell: bash

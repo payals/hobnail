@@ -13,6 +13,17 @@ Building an image, starting PostgreSQL or passing SQL tests alone cannot meet
 that result. Approval independence, exact-byte bindings, role separation,
 failure retention and uncertain-effect reconciliation remain mandatory.
 
+## Availability for new users
+
+The qualified implementation is in this repository, but there is no published
+Hobnail image, Compose quick start or public-only build recipe for the exact
+reviewed archives. The assembler needs reviewed closure inventories and pinned
+source metadata/layers that are not included in this source export. The rootfs
+archives are not distributed here either. The command below is for operators
+who already have those separately reviewed artifacts; it is not an installation
+shortcut from a fresh clone. See [INSTALLATION.md](INSTALLATION.md#linux-and-docker)
+for the available SDK path and the remaining Docker packaging gap.
+
 ## Scope and trusted components
 
 The first configuration uses the existing native PostgreSQL credential provider.

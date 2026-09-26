@@ -88,26 +88,16 @@ affected boundaries after code, policy, credential or deployment changes.
 
 ## Reporting a problem
 
-The current supported matrix and maintenance limits are in
-[SUPPORT.md](docs/SUPPORT.md). Package 0.2.0 is being prepared for publication;
-no public release or calendar support/response-time commitment is implied.
+Hobnail's source is public at [payals/hobnail](https://github.com/payals/hobnail).
+Private vulnerability reporting is enabled. Use the repository's
+[Security → Report a vulnerability form](https://github.com/payals/hobnail/security/advisories/new)
+for security issues; do not open a public issue containing exploit details,
+credentials or sensitive deployment data. You may need to sign in to GitHub.
 
-Use a private report to the deployment operator or maintainer with the exact
-revision, supported configuration, expected invariant and a minimal synthetic
-reproduction. Include observed refusal/effect records with secrets and personal
-data removed. The planned GitHub target is `payals/hobnail`; this local
-preparation does not claim a public issue tracker or disclosure endpoint is
-active. Public release and disclosure are separate owner-authorized actions.
-
-Before publishing code, the owner must establish a monitored private reporting
-route. GitHub's private vulnerability reporting is available for public
-repositories; a `SECURITY.md` file does not enable it. Use an established private
-contact, or configure and verify reporting on an expressly approved empty public
-repository before uploading code. Once that feature is actually enabled, use
-the repository's **Security → Report a vulnerability** form.
-Until then, use an already established private maintainer/operator channel;
-do not publish the exploit or attach credentials while seeking a contact.
-[GitHub's private reporting instructions](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately).
+The [support matrix](docs/SUPPORT.md) describes the checked configurations.
+Source/package version 0.2.0 does not imply a response-time commitment or a
+production support SLA. For a deployment-specific issue, also contact that
+deployment's operator through an established private channel.
 
 A useful report identifies the affected revision and configuration, the
 authority boundary crossed, expected versus observed behavior, a minimal
@@ -117,7 +107,7 @@ has actually been reproduced and preserve uncertainty about other versions or
 deployments. Coordinate public disclosure and remediation through the
 authorized maintainer process; no bounty or response deadline is promised here.
 
-Release preparation and the settings that remain to verify are documented in
-[RELEASE-GUIDANCE.md](docs/RELEASE-GUIDANCE.md). An unavailable reporting route
-must remain an explicit public-launch blocker, not a fictitious email address,
-account or enabled-service claim.
+See [maintenance](docs/MAINTENANCE.md) for active CI/security features and
+[release guidance](docs/RELEASE-GUIDANCE.md) for future release procedures.
+If the reporting form is unavailable, use an established private operator or
+maintainer channel; do not disclose the exploit publicly to obtain attention.

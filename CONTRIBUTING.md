@@ -6,17 +6,19 @@ usable path while preserving existing behavior, authority and evidence. Start
 with [README.md](README.md), the [protocol](docs/CONTRACT.md) and the
 [support matrix](docs/SUPPORT.md). Coding agents also read [AGENTS.md](AGENTS.md).
 
-The repository is being prepared for publication. No public issue tracker or
-private reporting endpoint is claimed to be active yet. Do not publish security
-details in an issue or pull request; follow [SECURITY.md](SECURITY.md). Public
-repository creation, pushes and releases remain separate authorized operations.
+The public repository and issue tracker are at
+[payals/hobnail](https://github.com/payals/hobnail). Private vulnerability
+reporting is enabled; follow [SECURITY.md](SECURITY.md) for security issues.
+Start with [installation](docs/INSTALLATION.md) for an installed SDK/CLI, or use
+the source-only test commands below. Publication and deployment still follow
+the repository owner's authorization.
 
 ## Development environment
 
 Use `.venv/bin/python` from the project's existing reviewed environment. All new
 reviewed Python requirements belong in this `.venv`; do not use global pip.
 If the project environment is absent, create it with an existing reviewed
-Python 3.11+ interpreter: `python3 -m venv --without-pip .venv`. This does not
+Python 3.11+ interpreter: `python3 -m venv .venv`. This does not
 download packages. The package uses Python's
 standard library and has no third-party Python dependencies; source-checkout
 commands do not require `pip install`, a global CLI or a plugin manager.

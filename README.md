@@ -1,67 +1,101 @@
 # Hobnail
 
-**Exact-work acceptance and protected actions for agent applications.**
+**Approve exact agent work, control its side effects, and verify what happened.**
 
-Hobnail binds a candidate's acceptance to its exact bytes, registered input
-snapshots, approved policy, complete required checks and independent identities.
-It records authorization, dispatch and observation separately. A worker's
-"done" or an adapter's successful response is not an observed outcome.
+**For coding agents:** start with [AGENTS.md](AGENTS.md), then the
+[agent guide](docs/AGENT-GUIDE.md). The optional [authoring skill](skills/hobnail/SKILL.md)
+helps prepare contracts; it does not grant execution authority.
+
+Hobnail lets an application require evidence before accepting or publishing an
+agent's output. You define a **contract**: the required checks, trusted inputs
+and permitted actions. A worker submits the output, an authorized verifier
+checks it, and PostgreSQL decides whether that exact work can proceed. A
+separate observer then confirms the action actually happened.
 
 Existing agent tools retain planning and coordination. Hobnail supplies a
 PostgreSQL control plane, standard-library Python SDK, bounded validators and
 protected file, local Git and research-record consumers. Applications own their
 contracts, trusted source acquisition and validation meaning.
 
-This source is being prepared for **`payals/hobnail`**. Public repository
-creation, publication and private vulnerability reporting setup are separate
-release steps; this document does not claim they
-have happened. Read [SECURITY.md](SECURITY.md) before deploying or reporting a
-security issue. A monitored reporting route must be established before launch.
-The [planned private reporting form](https://github.com/payals/hobnail/security/advisories/new)
-is **not enabled yet**; until it is verified, use an established private
-maintainer/operator channel as described in the security policy.
+Hobnail is public at [payals/hobnail](https://github.com/payals/hobnail).
+Report security issues through the enabled
+[private vulnerability reporting form](https://github.com/payals/hobnail/security/advisories/new);
+see [SECURITY.md](SECURITY.md) for the reporting and support policy.
 
-## Try it locally
+## Install the SDK and CLI
 
-Use an existing reviewed Python installation. Create a project environment only
-if `.venv` is absent; reuse an existing one rather than replacing it:
+On **macOS or Linux**, start with Git and Python **3.11+**. From a directory
+where you want a new checkout:
 
 ```sh
-test -d .venv || python3 -m venv .venv
-.venv/bin/python --version
-PYTHONPATH=src .venv/bin/python -m hobnail --help
-.venv/bin/python scripts/check_portable.py
+git clone https://github.com/payals/hobnail.git
+cd hobnail
+python3 -m venv .venv
+.venv/bin/python -m pip --isolated install --no-index --no-deps --no-build-isolation .
+.venv/bin/hobnail --help
 ```
 
-The package has no third-party Python dependencies, so these source-checkout
-commands need no package installation. The portable runner reports the exact
-selected and nonselected modules and refuses unclassified tests. Its pass is
-not a database, sandbox or provider qualification.
+This installs from the cloned source without downloading build or runtime
+packages. Reuse an existing `.venv` if you already have one. Keep the checkout:
+workflow scripts and database migrations are source tools, not part of the
+installed SDK wheel. [Full installation and troubleshooting](docs/INSTALLATION.md)
+explains prerequisites, platform differences and expected output.
 
-For the native workflow, use PostgreSQL 18 binaries on `PATH` and the supported
-macOS role/parser backend:
+Try the installed SDK without PostgreSQL:
 
 ```sh
-psql --version
+.venv/bin/python -I - <<'PYCODE'
+from hobnail import discover
+
+suggestions = discover(b'{"total":7}')
+print("Authoritative:", suggestions["authoritative"])
+print("Suggested checks:", ", ".join(item["plugin"] for item in suggestions["suggestions"]))
+PYCODE
+```
+
+It prints `Authoritative: False` and suggests `bytes.sha256` and
+`json.required_fields`. Suggestions help you author a contract; they do not
+approve work or prove the example's value is correct.
+
+## Run a complete workflow on macOS
+
+With PostgreSQL **18** binaries (`initdb`, `postgres`, `psql`, `pg_ctl`) on `PATH`:
+
+```sh
 .venv/bin/python scripts/local_demo.py
-.venv/bin/python scripts/qualified_local.py
 ```
 
-Each command creates and stops its own PostgreSQL cluster and retains private
-evidence. The demo performs real authenticated submission, independent checks,
-publication and observation using synthetic data. The separate qualification
-command also tests role isolation, actual forbidden reads/writes/connections,
-credential retirement and the protected file consequence. Do not point these
-commands at a shared database or publish their private runtime directories.
+The demo runs an accepted report and two rejection cases, creates and stops its
+own database, and prints `"run_status": "completed"` and `"runtime_stopped": true`
+when its checks pass. It uses synthetic inputs and a trusted demo controller.
+See the [step-by-step native example](docs/INSTALLATION.md#3-run-an-accepted-workflow-and-two-refusals-on-macos)
+for binary checks and help interpreting the receipt.
 
-The historical native combination is Python 3.14, PostgreSQL 18.3 and macOS.
-Python 3.11+ is the declared compatibility target, not a claim that every version
-was tested. Source and release checks must identify the exact candidate commit.
-Unsupported mandatory execution backends fail closed. The separately reviewed
-Linux ARM64 Docker reference passed actual role, parser, credential, effect and
-cleanup controls; it trusts the supervisor and daemon and supports only the
-locked configuration and builtin validators. See the [Docker record](docs/DOCKER-DEPLOYMENT.md)
-and [support matrix](docs/SUPPORT.md).
+| Platform | Available path |
+| --- | --- |
+| macOS | SDK/CLI, portable tests, and the PostgreSQL 18 native demo/role workflow. |
+| Linux | SDK/CLI and portable source tests. The macOS native helpers do not run here. |
+| Docker | A qualified, exact Linux ARM64 reference exists, but there is no public image or public-only build/install recipe yet. [What is available](docs/INSTALLATION.md#linux-and-docker). |
+| Native Windows | Not supported by the current onboarding/runtime matrix. WSL2 is not separately tested. |
+
+The Docker archive/build-input distribution gap is explicit; an ordinary
+`docker run postgres` command would not create a Hobnail deployment.
+The [support matrix](docs/SUPPORT.md) names the tested configurations and limits.
+
+## How the database gate works
+
+The maintained entry point is `hobnail.api(op text, payload jsonb)`, with
+operation-specific validation and PostgreSQL role/scope enforcement. State
+changes and their audit record share a transaction; the SDK commits each call
+independently. Protected Python
+verifiers perform content checks; the database rechecks exact evidence and
+current authority before acceptance. External actions require separate
+observation and are not part of a PostgreSQL transaction.
+
+A FastMCP server and per-operation typed-SQL generator are **not shipped**.
+The earlier `work`/`eval` schema is a separate legacy example.
+[Architecture and extension points](docs/ARCHITECTURE.md) explains what is
+implemented, what can be extended, and the distinction from that example.
 
 ## Run your own work
 
@@ -89,6 +123,19 @@ unrestricted code is not an isolation boundary. Suggestions and generated
 contracts remain proposals until an authorized independent approver activates
 them. The [optional skill](skills/hobnail/SKILL.md) assists authoring; it does not
 grant credentials or policy authority.
+
+## CI and delivery
+
+[GitHub Actions](https://github.com/payals/hobnail/actions) runs portable checks
+and the source/history security scan on pushes and pull requests. The security
+scan also has a weekly Monday 06:37 UTC schedule. Dependabot is configured for
+weekly Python-package and GitHub Actions version-update proposals.
+
+There is **no automatic deployment, PyPI publication, Docker image push or
+GitHub release workflow**. CodeQL, dependency-review enforcement and the
+proposed branch rules are separate configurations, not implied by a green CI
+run. [Current CI/CD and maintenance details](docs/MAINTENANCE.md) distinguishes
+active checks from proposals and runtime qualifications.
 
 ## Contributing and licensing
 

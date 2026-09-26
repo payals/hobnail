@@ -3,8 +3,17 @@
 This policy describes the 0.2.0 source candidate and its maintained protocol-1
 interfaces. Release checks must identify the exact candidate. Native and Docker
 reference results are evidence for their recorded configuration, not a
-transferable deployment certificate. Public publication is a separate step. No support SLA or calendar response
+transferable deployment certificate. The source repository is public; packaged release/deployment authority is separate. No support SLA or calendar response
 commitment is promised.
+
+## Installation by operating system
+
+The SDK/CLI and portable source checks have a macOS/Linux path; the native
+role/parser workflow is macOS-specific. Native Windows onboarding/runtime is
+not supported in this release, and WSL2 is not separately tested. Docker is a
+qualified reference with undistributed runtime/build inputs, not a published
+image that users can install with one command.
+[INSTALLATION.md](INSTALLATION.md) gives the exact available paths and prerequisites.
 
 ## Scope
 
@@ -77,9 +86,8 @@ effect. Keep those boundaries separately and never publish live role/password
 dumps. Follow [OPERATIONS.md](OPERATIONS.md) for the maintained installer and
 owned runtime checks.
 
-Report security problems through [SECURITY.md](../SECURITY.md). The planned
-repository's private reporting route must be enabled and verified before
-public launch; it is not claimed active here. Preserve the original failure,
+Report security problems through [SECURITY.md](../SECURITY.md). Private
+vulnerability reporting is enabled on the public repository. Preserve the original failure,
 use a minimal synthetic reproduction and obtain independent assessment. Urgency
 does not authorize weaker checks, erased evidence or unreviewed dependencies.
 

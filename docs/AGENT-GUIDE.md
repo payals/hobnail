@@ -6,6 +6,21 @@ the planner or decide what the owner's goal ought to mean. This guide explains
 how to contribute to Hobnail and how to use it without confusing those roles.
 The scoped repository instructions are [AGENTS.md](../AGENTS.md).
 
+## Start here if you are an agent
+
+1. Read the root [AGENTS.md](../AGENTS.md) and the owner's current task.
+2. Follow [INSTALLATION.md](INSTALLATION.md) for the SDK/CLI and the supported
+   host path. Use the existing project environment when present.
+3. For application work, follow [NATIVE-APPLICATION.md](NATIVE-APPLICATION.md)
+   and propose a complete contract before requesting its separate activation.
+4. The optional [Hobnail authoring skill](../skills/hobnail/SKILL.md) helps with
+   that authoring process. It is not a credential or an approval.
+
+Hobnail does not ship an MCP/FastMCP server or an automatic agent-runtime
+configuration command. Use the Python SDK, JSON CLI or your explicitly reviewed
+transport integration. [ARCHITECTURE.md](ARCHITECTURE.md) describes the actual
+SQL entry point and extension boundaries.
+
 ## Two different tasks
 
 | Task | Agent responsibility | Separate authority |

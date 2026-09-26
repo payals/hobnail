@@ -1,22 +1,50 @@
-# Prepared GitHub maintenance controls
+# CI, delivery and maintenance
 
-These files prepare `payals/hobnail`; they have not created a repository, pushed
-code, activated settings, opened a pull request, or granted a bot authority.
-The goal is reviewed, reproducible maintenance with preserved failures. Named
-checks provide bounded evidence; neither a green badge nor an LLM review may
-change the acceptance policy or declare a release ready.
+[payals/hobnail](https://github.com/payals/hobnail) is public. The portable and
+source-security workflows run on GitHub; the initial canonical-receipt-path
+failure was fixed and its failed run remains visible. This page distinguishes
+active automation from proposed configuration. A green check proves its named
+checks, not a runtime qualification or deployment approval.
 
-## Files and live activation
+## What runs automatically
+
+| Automation | Trigger | What it checks |
+| --- | --- | --- |
+| `Portable source checks` | Push, pull request, manual dispatch | Fresh public checkout, explicit portable POSIX tests, offline SDK install and CLI example, then Python syntax compilation on Ubuntu 24.04. |
+| `Source security checks` | Push, pull request, manual dispatch, Monday 06:37 UTC | Current source and complete reachable public history; exact reviewed synthetic exceptions remain visible. Optional dependency review runs only when configured. |
+| Dependabot version updates | Weekly, Monday; Python packages 06:23 UTC and Actions 06:43 UTC | Proposes version changes; it does not approve or merge them. These ecosystems currently declare no third-party packages or Actions. |
+
+The [workflow files](../.github/workflows/) define the commands and permissions;
+[Actions](https://github.com/payals/hobnail/actions) records actual executions.
+Portable tests do not run PostgreSQL, macOS confinement, OpenBao or Docker
+qualification. Syntax compilation is not runtime execution.
+
+There is **no automatic CD**: no deployment, PyPI publishing, Docker registry
+push, release tagging or GitHub release workflow is configured. The installed
+SDK smoke check does not start a service.
+
+## Live configuration readback
+
+At the September 26, 2026 readback, private vulnerability reporting, GitHub
+secret scanning and secret-scanning push protection were enabled. The two
+source workflows and Dependabot version-update automation were active.
+CodeQL default setup was not configured, Dependabot security-update automation
+was disabled, and `HOBNAIL_DEPENDENCY_REVIEW` was unset. There were no active
+repository rulesets and `main` was not protected. This is a dated observation;
+GitHub settings remain authoritative. No additional review restrictions are
+imposed by merely storing the proposed JSON files below.
+
+## Proposed configuration and optional activation
 
 | Prepared file | Meaning | Live step still required |
 |---|---|---|
-| `.github/rulesets/main.json` | Importable branch ruleset for `main` and the default branch; no bypass actors | Import after the reviewed initial public commit and successful CI, then verify actual enforcement |
+| `.github/rulesets/main.json` | Importable branch ruleset for `main` and the default branch; no bypass actors | Optional owner-selected policy; not currently active |
 | `.github/repository-settings.json` | Desired-state document, **not an API request or an applied receipt** | Owner applies and verifies each supported repository setting |
 | `.github/dependabot.yml` | Weekly `pip` and `github-actions` proposals; seven-day version cooldown | Enable dependency graph, Dependabot alerts and security-update PRs |
-| `.github/workflows/security.yml` | Read-only, dependency-free source/history scan plus optional public dependency review | Observe actual PR and scheduled executions after publication |
+| `.github/workflows/security.yml` | Read-only, dependency-free source/history scan plus optional public dependency review | Push executions observed; inspect actual PR/scheduled runs separately |
 | `security/scan-allowlist.json` | Exact file/rule/match-hash exceptions for reviewed synthetic fixtures | Code-owner review for every change; no wildcard or directory-wide exclusions |
 
-The ruleset requires a pull request, one approving code-owner review, dismissal
+The proposed ruleset would require a pull request, one approving code-owner review, dismissal
 of stale approvals, approval of the latest reviewable push by someone other than
 its pusher, resolved discussions, and fresh-base success for `portable` and
 `security`. It blocks force pushes and deletion and permits squash merging only.

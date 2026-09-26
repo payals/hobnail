@@ -1,12 +1,11 @@
 # Public release preparation and primary-source guidance
 
-Reviewed September 25, 2026. This is repository-local preparation, not a public
-release announcement, configured GitHub service, compliance assessment or
-permission to publish. The owner selected `payals/hobnail` as the GitHub target;
-this document does not claim that repository exists or reporting is enabled.
-A monitored private reporting channel remains to be verified. A public launch
-must wait for the owner's destination/action authorization and evidence that
-the applicable gates below are satisfied.
+The source repository is public at [payals/hobnail](https://github.com/payals/hobnail),
+and private vulnerability reporting is enabled. The current automation and
+verified settings are described in [MAINTENANCE.md](MAINTENANCE.md). This guide
+covers future release decisions and optional hardening; a committed desired-state
+file does not mean a remote setting is active. Package publication, container
+image distribution and deployment remain separate operations.
 
 ## License and project entry points
 

@@ -1,5 +1,10 @@
 # Operating Hobnail
 
+New users: start with [installation and the first example](INSTALLATION.md).
+Installing the SDK does not install the PostgreSQL schema or provision services;
+this page covers the maintained operator path. The [architecture](ARCHITECTURE.md)
+explains its JSON API, transaction boundary and external effects.
+
 The goal is independently justified acceptance of exact work and an authorized,
 observed consequence. Keep approved policy, trusted inputs, validators,
 credentials and destination authority outside worker control. These procedures
