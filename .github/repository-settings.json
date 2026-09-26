@@ -1,0 +1,58 @@
+{
+  "schema": "hobnail-repository-desired-state-v1",
+  "repository": "payals/hobnail",
+  "applied": false,
+  "meaning": "Desired configuration only. This document performs no GitHub API call and grants no publication or account authority.",
+  "repository_settings": {
+    "default_branch": "main",
+    "allow_squash_merge": true,
+    "allow_merge_commit": false,
+    "allow_rebase_merge": false,
+    "allow_auto_merge": false,
+    "delete_branch_on_merge": false
+  },
+  "actions": {
+    "default_workflow_permissions": "read",
+    "can_approve_pull_request_reviews": false,
+    "fork_workflow_approval": "all_external_contributors",
+    "runner_policy": "standard ephemeral GitHub-hosted VMs; no public fork code on an owner workstation or persistent self-hosted runner",
+    "third_party_actions_currently_used": [],
+    "future_action_policy": "Exact reviewed full commit SHA, publisher and artifact review, and owner dependency-age requirements before execution"
+  },
+  "security_features": {
+    "dependency_graph": "enabled",
+    "dependabot_alerts": "enabled",
+    "dependabot_security_updates": "enabled",
+    "secret_scanning": "enabled",
+    "secret_scanning_push_protection": "enabled",
+    "private_vulnerability_reporting": "enabled",
+    "codeql": {
+      "setup": "default",
+      "languages": ["python", "actions"],
+      "activation": "pending owner activation and verification of the generated configuration and actual scans",
+      "limitations": "GitHub-managed scanner versions; does not scan SQL/PLpgSQL or prove runtime authority. No claim that managed tool updates satisfy local artifact pinning and age review."
+    }
+  },
+  "ruleset": {
+    "file": ".github/rulesets/main.json",
+    "required_checks": ["portable", "security"],
+    "expected_check_source": "GitHub Actions",
+    "integration_id_binding": "REQUIRED live activation step: obtain the actual installed GitHub Actions App ID from successful checks and bind both contexts. The import file intentionally contains no invented ID.",
+    "live_verification_required": true,
+    "solo_owner_limit": "One approval and last-push independence cannot be satisfied by a sole maintainer approving their own pull request. Owner-authored PRs also need a second genuinely independent authorized CODEOWNER because the current file names only payals. Separately authenticated bot-authored maintenance PRs can be reviewed by the owner; do not silently add a bypass."
+  },
+  "optional_dependency_review": {
+    "repository_variable": "HOBNAIL_DEPENDENCY_REVIEW",
+    "default": "not_configured",
+    "enable_value": "enabled",
+    "when_enabled": "On pull_request, query the public dependency-graph comparison endpoint. Added vulnerable dependencies or unavailable/malformed API evidence fail the security job.",
+    "limits": "No third-party Python requirements or action dependencies currently exist. Custom Docker locks, operating-system packages, executable provenance, licensing and the 168-hour age decision need their separate reviewed paths."
+  },
+  "maintenance_authority": {
+    "dependabot": "May propose supported manifest updates after live activation; never an approval or merge authority",
+    "advisory_model": "Jev/OpenRouter review is advisory only; no check-authority, approving-review, merge, ruleset, credential, release or deployment capability",
+    "advisory_input": "Explicit closed public maintenance metadata only; no repository discovery, raw source/diffs, logs, PR prose or private context",
+    "automatic_merge": "disabled",
+    "future_merge_gate": "Human owner review of exact latest SHA; actual success from expected trusted check App; fresh-base tests; reviewed age/provenance/integrity/advisory evidence; no policy, evaluator, workflow, credential, isolation or migration self-approval"
+  }
+}

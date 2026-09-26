@@ -1,0 +1,36 @@
+== 1. the state machine is a table
+ERROR:  illegal transition queued -> done on step 1
+== 2. one worker per job; a token, not a belief
+ assert: two claims, two different jobs | t
+ assert: a third claim gets nothing | t
+ERROR:  job 1 not finished: token mismatch, lease expired, or already done
+ assert: the right token finishes the job | t
+== 3. absence of evidence is not a pass
+ assert: no gate rows reads as false, not NULL | t
+ assert: one failed gate reads as false | t
+ERROR:  ledger is append-only: UPDATE on gate_log refused
+ERROR:  ledger is append-only: DELETE on gate_log refused
+== 4. the worker connects as itself and files its claim
+ERROR:  permission denied for table gate_log
+ERROR:  permission denied for schema eval
+ERROR:  permission denied for schema eval
+ERROR:  permission denied to set role "grader_role"
+ERROR:  step 1 cannot be verified: no passing verdict row
+== 5. the grader connects as itself and says whether it worked
+ERROR:  permission denied for function file_attempt
+ERROR:  permission denied for table verdicts
+ERROR:  permission denied for table verdicts
+ assert: step 1 is verified | t
+== 6. nobody grades their own work, not even the owner
+ERROR:  new row for relation "verdicts" violates check constraint "no_self_judging"
+== 7. the ledger cannot be rewritten, and a bypass leaves a mark
+ assert: chain intact | t
+ERROR:  ledger is append-only: UPDATE on verdicts refused
+ assert: chain broken after the bypass | t
+== 8. the catalog says whether the rules still bind
+ work.steps    | steps_guard        | O
+ work.steps    | steps_need_verdict | O
+ work.attempts | attempts_immutable | O
+ work.gate_log | gate_log_immutable | O
+ eval.verdicts | verdicts_immutable | D
+ eval.verdicts | verdicts_seal      | O

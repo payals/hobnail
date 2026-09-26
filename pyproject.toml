@@ -1,0 +1,16 @@
+[build-system]
+requires = []
+build-backend = "build_backend"
+backend-path = ["."]
+
+[project]
+name = "hobnail"
+version = "0.2.0"
+description = "Exact-work accountability and protected action protocol"
+requires-python = ">=3.11"
+license = "MIT"
+readme = "README.md"
+dependencies = []
+
+[project.scripts]
+hobnail = "hobnail.cli:main"

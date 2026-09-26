@@ -1,0 +1,161 @@
+{
+  "schema": "hobnail-scan-allowlist-v1",
+  "entries": [
+    {
+      "path": "tests/test_client.py",
+      "rule": "credential_literal",
+      "match_sha256": "2dc8ed5e43931b3b8789d90566e66975415ebd7697ed9d14746d961ca0a30129",
+      "reason": "Synthetic connection fixture used only with a mocked psql subprocess."
+    },
+    {
+      "path": "tests/test_client.py",
+      "rule": "credential_literal",
+      "match_sha256": "a0194aaaf9fd2079bc381144a258b8e49e4e3273696f2a757650e66ce07d43b2",
+      "reason": "Deliberate libpq quoting injection input; not a credential or service account."
+    },
+    {
+      "path": "tests/test_client.py",
+      "rule": "credential_literal",
+      "match_sha256": "0cec5084ef81c23e8113272c6dab9907182b4bb314e7eba5cd15b27f269a0630",
+      "reason": "Expected forbidden string in the libpq quoting regression assertion."
+    },
+    {
+      "path": "tests/test_credentials.py",
+      "rule": "credential_uri",
+      "match_sha256": "9d1e17b7aec8589246202ac0ca334895d4eb8ecc5c8e419954b56f3c6b4af894",
+      "reason": "Synthetic example.org credential URL deliberately rejected by origin validation."
+    },
+    {
+      "path": "tests/test_credentials.py",
+      "rule": "credential_literal",
+      "match_sha256": "453ff4cb33527469d8659d4f84e3f4c3da4d7dd5e6dbfcddd72742ef3162d96a",
+      "reason": "Deliberately wrong password used to assert refusal in an owned disposable database."
+    },
+    {
+      "path": "tests/test_credentials.py",
+      "rule": "credential_literal",
+      "match_sha256": "9b23563629328945879448b80ef9dbfe301c70b60f2ac0137cbc4dcd8aeb8ae6",
+      "reason": "Synthetic credential in an in-memory mocked OpenBao HTTP response."
+    },
+    {
+      "path": "tests/test_credentials.py",
+      "rule": "credential_literal",
+      "match_sha256": "935f65b8c14f9088090d04cd8e489af042ff11c083b18ed2bbc98eb170655a48",
+      "reason": "Synthetic credential in an oversized-TTL refusal response fixture."
+    },
+    {
+      "path": "tests/test_credentials.py",
+      "rule": "credential_literal",
+      "match_sha256": "e2f39e255be9ddbbc5d261337242ee10b4a41d8f70c33fe4d2a3dd59f51f3fdc",
+      "reason": "Synthetic credential in a backend profile-redirection refusal fixture."
+    },
+    {
+      "path": "tests/test_execution_backend.py",
+      "rule": "credential_literal",
+      "match_sha256": "4ee03103abe11f48517219469a04c33fb476dea2aaa4048a45bebff4ca233dee",
+      "reason": "Controlled verifier lease identity used with mocked transport and executor."
+    },
+    {
+      "path": "tests/test_openbao_acl_checks.py",
+      "rule": "credential_literal",
+      "match_sha256": "e298d18146dd349ded2394dfcdef0177e6ce8cee8ada03a9bf9767c0859452b0",
+      "reason": "Synthetic extra password field used to test closed-shaped snapshot refusal."
+    },
+    {
+      "path": "tests/test_openbao_runtime.py",
+      "rule": "credential_literal",
+      "match_sha256": "f058361eb2c9de3f25de2309d27ed2f76fd7fd6d08292c0ab2a5353650361ca7",
+      "reason": "Synthetic redirect token sent only to the owned local redirect-refusal test server."
+    },
+    {
+      "path": "tests/test_release_safety.py",
+      "rule": "credential_literal",
+      "match_sha256": "822d6f72f65ac60a3b95174e77126253551f38906234dadc730aabfb23555b3e",
+      "reason": "Synthetic scanner regression verifies exceptions bind exact file, rule and value hash."
+    },
+    {
+      "path": "tests/test_docker_entrypoints.py",
+      "rule": "credential_literal",
+      "match_sha256": "e2c7cea0575b24eb0248fd063adbafeaf3c41e533cf5168d5dbf6311e779c8c0",
+      "reason": "Synthetic owned entrypoint password marker constructed for framing and redaction fixtures."
+    },
+    {
+      "path": "tests/test_docker_qualification_unit.py",
+      "rule": "credential_literal",
+      "match_sha256": "99e2b10364ecb35012b2a6e545b20f5655621d9326a428286460957c2e196707",
+      "reason": "Forbidden extra password field deliberately rejected by the release configuration parser."
+    },
+    {
+      "path": "tests/test_docker_qualification_unit.py",
+      "rule": "credential_literal",
+      "match_sha256": "5eef21458333d36a80c44536f01b2675d75eac25badaca1e15f89bf5cd5ee598",
+      "reason": "Synthetic secret marker used to prove nested qualification evidence redaction."
+    },
+    {
+      "path": "tests/test_docker_qualification_unit.py",
+      "rule": "credential_literal",
+      "match_sha256": "47973442f20a00b172646305170d10e184188bc561e8e8c9b369a85c351501f3",
+      "reason": "Regex match on a dictionary key assertion; verifies secret keys are redacted as well as values."
+    },
+    {
+      "path": "tests/test_docker_qualification_unit.py",
+      "rule": "credential_literal",
+      "match_sha256": "3cdcdd3893b30fe314415b80acf7eef893896286fca14ad88b1464950e2ce27a",
+      "reason": "Synthetic connection password used by mocked SQL-hold authority and termination tests."
+    },
+    {
+      "path": "tests/test_docker_supervisor.py",
+      "rule": "credential_literal",
+      "match_sha256": "d308361bdd0dd9c738ee2512b3cd5b0f81260c6603d48124f6f2201c7e953c86",
+      "reason": "Synthetic administrator connection passed only to a mocked endpoint framing regression."
+    },
+    {
+      "path": "tests/test_maintenance_triage.py",
+      "rule": "credential_literal",
+      "match_sha256": "179e9a6d317a07feeceea8de4b73d98ce5311627c9577a53c173597ea2e4cad8",
+      "reason": "Synthetic key used only with a mocked child process to verify named environment isolation and absence from argv/input/receipt."
+    },
+    {
+      "path": "tests/test_maintenance_triage.py",
+      "rule": "credential_literal",
+      "match_sha256": "958e47bec235898605f6c2444f0bb95a10b5da04271e3f0f89fd7ed2c5771fc2",
+      "reason": "Synthetic secret marker in injected child timeout and OS exceptions; verifies no output leakage and no retry."
+    },
+    {
+      "path": "tests/test_docker_entrypoints.py",
+      "rule": "private_evidence_path",
+      "match_sha256": "9219144ff5636582f458dc6d0e480c762b75747d52fb541536627a63de24be03",
+      "reason": "Invented fixed canary path for closed-request validation and mocked host/parser boundary checks; no runtime evidence location."
+    },
+    {
+      "path": "tests/test_docker_entrypoints.py",
+      "rule": "private_evidence_path",
+      "match_sha256": "36635d8171f52d8d1112d1f3b9cf82f24d8d7f3d18a019c9eee49913aa00148a",
+      "reason": "Invented invalid canary path in closed-shape rejection fixtures, covering traversal, wrong basename, escaped newline or child path; not an actual private location."
+    },
+    {
+      "path": "tests/test_docker_entrypoints.py",
+      "rule": "private_evidence_path",
+      "match_sha256": "87420de1575347e3479c2b22965980d61cbe521b6eb3339b2a8da517de850474",
+      "reason": "Invented invalid canary path in closed-shape rejection fixtures, covering traversal, wrong basename, escaped newline or child path; not an actual private location."
+    },
+    {
+      "path": "tests/test_docker_entrypoints.py",
+      "rule": "private_evidence_path",
+      "match_sha256": "8815fb92b88b41487cd340d50509acdfa785fb006f12baa53cd1d96660dc9845",
+      "reason": "Invented invalid canary path in closed-shape rejection fixtures, covering traversal, wrong basename, escaped newline or child path; not an actual private location."
+    },
+    {
+      "path": "tests/test_docker_entrypoints.py",
+      "rule": "private_evidence_path",
+      "match_sha256": "aba5907f9a8950ecab6d21fc5180ee14614d6815ee8022a8ad1ea343aad8befc",
+      "reason": "Invented invalid canary path in closed-shape rejection fixtures, covering traversal, wrong basename, escaped newline or child path; not an actual private location."
+    },
+    {
+      "path": "tests/test_docker_qualification_unit.py",
+      "rule": "private_evidence_path",
+      "match_sha256": "ff28886acbc72ce6dd3bc2d6ef97ea175029e8dac030aa68b35d24157b434024",
+      "reason": "Invented canary string in inert parser request validation fixture; no filesystem or live runtime evidence is read."
+    }
+  ]
+}

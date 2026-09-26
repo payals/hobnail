@@ -1,0 +1,72 @@
+name: Portable source checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  portable:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Fetch the exact public event commit anonymously
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          # BEGIN PUBLIC CHECKOUT
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+
+          repository = os.environ.get("GITHUB_REPOSITORY", "")
+          revision = os.environ.get("GITHUB_SHA", "")
+          if not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?/[A-Za-z0-9_.-]{1,100}", repository):
+              raise SystemExit("invalid public repository identity")
+          if repository.split("/")[1] in {".", "..", ".git"}:
+              raise SystemExit("invalid public repository name")
+          if not re.fullmatch(r"[0-9a-f]{40}", revision):
+              raise SystemExit("exact SHA-1 commit required")
+          source = Path("source")
+          templates = Path("empty-git-templates")
+          source.mkdir(mode=0o700)
+          templates.mkdir(mode=0o700)
+          environment = {
+              "PATH": "/usr/bin:/bin", "LANG": "C.UTF-8", "LC_ALL": "C.UTF-8",
+              "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null",
+              "GIT_TERMINAL_PROMPT": "0", "GIT_NO_REPLACE_OBJECTS": "1",
+              "GIT_ATTR_NOSYSTEM": "1", "GIT_NO_LAZY_FETCH": "1", "GIT_ALLOW_PROTOCOL": "https",
+          }
+          git = ["/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "credential.helper=",
+                 "-c", "core.askPass=/bin/false", "-c", "protocol.allow=never",
+                 "-c", "protocol.https.allow=always", "-c", "http.followRedirects=false",
+                 "-c", "fetch.fsckObjects=true", "-c", "transfer.fsckObjects=true",
+                 "-c", "submodule.recurse=false", "-c", "fetch.recurseSubmodules=false"]
+          def run(*arguments):
+              return subprocess.run([*git, *arguments], cwd=source, env=environment,
+                                    stdin=subprocess.DEVNULL, check=True, text=True,
+                                    capture_output=True, timeout=120).stdout.strip()
+          run("init", "--quiet", "--template=" + str(templates.resolve()))
+          run("fetch", "--no-tags", "--depth=1", "https://github.com/" + repository + ".git", revision)
+          run("checkout", "--quiet", "--detach", "FETCH_HEAD")
+          if run("rev-parse", "HEAD") != revision:
+              raise SystemExit("checked-out commit differs from event")
+          print(json.dumps({"repository": repository, "commit": revision, "anonymous_public_checkout": True}))
+          # END PUBLIC CHECKOUT
+          PY
+      - name: Create the project environment and check the explicit portable profile
+        working-directory: source
+        shell: bash
+        run: |
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 python3 -m venv --without-pip .venv
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python scripts/check_portable.py --receipt ../portable-checks.json
+      - name: Compile source syntax without running runtime integrations
+        working-directory: source
+        shell: bash
+        run: |
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -m compileall -q src scripts tests build_backend.py

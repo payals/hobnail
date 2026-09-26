@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "status": "quarantined-static-review-not-execution-approval",
+  "platform": "linux/arm64/v8",
+  "source_images": [
+    {
+      "repository": "docker.io/library/postgres",
+      "reference_tag_for_discovery_only": "18.6-alpine3.23",
+      "index_digest": "sha256:885cf05d376c7cf27afef02073e6bdac3841252537f16e244fd1c1e6a7c99fb1",
+      "manifest_digest": "sha256:1d70b0960b2d1c39a0a82cda0d19d78b9b676d64b2120efe82631cd9768d1814",
+      "configuration_digest": "sha256:737bcf12fa73781be086d5884ac3982af953a9784e27ecc32cb8d8a97ca557de",
+      "platform_published_at": "2026-09-18T01:12:47.681535237Z",
+      "layers": [
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:ace1621be7ff15b54252f68393ac33181df7f3e095e36a5d9a9892031b357d31",
+          "size": 4186056
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:fcf39f2f4e91d2957cd1cf98e58a4e3c58c61fb05cac19cc8f52436c2b61ee4f",
+          "size": 968
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:d0bd38c1e4c469d00ca346d9704ddfcc102fd2759490cfc65a6f494811b685b3",
+          "size": 853410
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:c0b118f2c42661699b2fd5da3aa8a72ef3dc702cf7e85f8f6424da43ca247ecf",
+          "size": 116
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:8aaacd1b534b4c3a0969e9c0fbc5e01f629e311c277ea0021828b5f6b5b314fb",
+          "size": 112326269
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:7f9adeca8f3b12cc53fff366725b5b6480ec7fd1c7a7fc66c19354e6ac4cd088",
+          "size": 19007
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:7098235fdb6ff05bfb94739d44e12149433f31bee70933135ae6dcfb5c6e24fa",
+          "size": 128
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:54dc94a3d14abb32bf5096cde37d23249f35e1cc159b62e7285d3f15fe02d069",
+          "size": 6107
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:7b9f81988dffe4bdcb95e126e960e09e81ee6822aec6c3a91338f9923de4712e",
+          "size": 182
+        }
+      ]
+    },
+    {
+      "repository": "docker.io/library/python",
+      "reference_tag_for_discovery_only": "3.14.7-alpine3.23",
+      "index_digest": "sha256:218761489de417a6eb0808e264cbdd7043ec6659fe5a61898815e9848536541d",
+      "manifest_digest": "sha256:480abd719aa1bedf60a3ad2d9237e61fd17112ad0c39a484b351e34cddbe46fd",
+      "configuration_digest": "sha256:168420029787a92bca1304c825d83c0b3eca635fce96020cf74d0856f7a6ae13",
+      "platform_published_at": "2026-09-17T23:06:23.261592955Z",
+      "layers": [
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:ace1621be7ff15b54252f68393ac33181df7f3e095e36a5d9a9892031b357d31",
+          "size": 4186056
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:5254eb9bbdb7ada5bd9ff5d199575982dbc9af2b510a8d19cd23e2b67b2cae4b",
+          "size": 419107
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:3503a55bf3c038040465a9a05511d9da7921d2a728c5d741bd45734813c57347",
+          "size": 13588624
+        },
+        {
+          "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+          "digest": "sha256:e587a5a12200f05a3c92bbc323ba56f27a20cbb57d2709db4410d58c1b3416cb",
+          "size": 250
+        }
+      ]
+    }
+  ],
+  "rootfs": [
+    {
+      "flavor": "parser",
+      "filename": "hobnail-parser-arm64.rootfs.tar",
+      "sha256": "a9ef107a021aa6efc3b46a55792d515a5d6ff644b43c8e2fd3315a1c968293bc",
+      "size": 40028160
+    },
+    {
+      "flavor": "runtime",
+      "filename": "hobnail-runtime-arm64.rootfs.tar",
+      "sha256": "01231c53cba4a64b38638fea32a8a5fcb1c4c29b667fdd3ad6213102b20de580",
+      "size": 101283840
+    }
+  ],
+  "profiles": [
+    {
+      "path": "seccomp-database-arm64.json",
+      "sha256": "2e334574cf4e3f76d2352f4746642fb3f835c5ce84e50e151859fc0bd295b5a0"
+    },
+    {
+      "path": "seccomp-parser-arm64.json",
+      "sha256": "2fb75a97799ff0ad6463ec3fe89d90e4794d74c423c86b0f0a7e9b584bff0e62"
+    },
+    {
+      "path": "seccomp-role-arm64.json",
+      "sha256": "7e22fa6284180aaed78b861cac33080d558a257391aad15f9bb935cdeb030a7f"
+    }
+  ],
+  "limits": {
+    "native_architecture_only": true,
+    "other_platforms_qualified": false
+  }
+}
