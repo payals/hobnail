@@ -80,8 +80,9 @@ jobs:
         working-directory: source
         shell: bash
         run: |
+          mcp_receipt_parent="$(cd .. && pwd -P)"
           env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python scripts/check_mcp_dependencies.py \
-            --profile linux-x86_64-py312 --receipt ../mcp-dependency-check.json
+            --profile linux-x86_64-py312 --receipt "$mcp_receipt_parent/mcp-dependency-check.json"
       - name: Report optional public dependency-review evidence without fallback
         shell: bash
         env:

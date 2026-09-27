@@ -97,8 +97,9 @@ jobs:
         shell: bash
         run: |
           set -eu
+          mcp_receipt_parent="$(cd .. && pwd -P)"
           env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python scripts/check_mcp_dependencies.py \
-            --profile linux-x86_64-py312 --download-dir ../mcp-wheels --receipt ../mcp-dependencies.json
+            --profile linux-x86_64-py312 --download-dir "$mcp_receipt_parent/mcp-wheels" --receipt "$mcp_receipt_parent/mcp-dependencies.json"
           env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python - <<'PY'
           import hashlib
           import json
