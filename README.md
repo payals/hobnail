@@ -17,6 +17,12 @@ PostgreSQL control plane, standard-library Python SDK, bounded validators and
 protected file, local Git and research-record consumers. Applications own their
 contracts, trusted source acquisition and validation meaning.
 
+**Bring your preferred coding agent.** Connect through the optional MCP server,
+Python SDK or JSON CLI, using an interface your client supports. Subscription
+access, API billing and local-model operation stay with your existing tools and
+provider terms. The core needs no model-provider account and receives no model
+credentials. Optional hosted advice integrations are separate choices.
+
 Hobnail is public at [payals/hobnail](https://github.com/payals/hobnail).
 Report security issues through the enabled
 [private vulnerability reporting form](https://github.com/payals/hobnail/security/advisories/new);
@@ -75,11 +81,10 @@ for binary checks and help interpreting the receipt.
 | --- | --- |
 | macOS | SDK/CLI, portable tests, and the PostgreSQL 18 native demo/role workflow. |
 | Linux | SDK/CLI and portable source tests. The macOS native helpers do not run here. |
-| Docker | A qualified, exact Linux ARM64 reference exists, but there is no public image or public-only build/install recipe yet. [What is available](docs/INSTALLATION.md#linux-and-docker). |
+| Docker | Assemble the exact Linux ARM64 reference from pinned public inputs, then run its owned qualification. No prebuilt image or Compose service is published. [Docker instructions](docs/INSTALLATION.md#linux-and-docker). |
 | Native Windows | Not supported by the current onboarding/runtime matrix. WSL2 is not separately tested. |
 
-The Docker archive/build-input distribution gap is explicit; an ordinary
-`docker run postgres` command would not create a Hobnail deployment.
+An ordinary `docker run postgres` command does not create a Hobnail deployment.
 The [support matrix](docs/SUPPORT.md) names the tested configurations and limits.
 
 ## How the database gate works
@@ -92,8 +97,15 @@ verifiers perform content checks; the database rechecks exact evidence and
 current authority before acceptance. External actions require separate
 observation and are not part of a PostgreSQL transaction.
 
-A FastMCP server and per-operation typed-SQL generator are **not shipped**.
-The earlier `work`/`eval` schema is a separate legacy example.
+The optional [Hobnail MCP adapter](docs/MCP.md) gives existing agents seven
+worker tools over stdio. It uses a configured database-verified worker identity;
+verification, approval and effect services remain separate. Its dependency lock
+and installation are separate from the core SDK above.
+
+[Typed SQL functions](docs/TYPED-SQL.md) call the same enforced API. Immutable
+proofs bind acceptance to its passing check set while preserving historical
+receipts after later input or policy changes. The earlier `work`/`eval` schema
+is a separate legacy example.
 [Architecture and extension points](docs/ARCHITECTURE.md) explains what is
 implemented, what can be extended, and the distinction from that example.
 
@@ -127,12 +139,15 @@ grant credentials or policy authority.
 ## CI and delivery
 
 [GitHub Actions](https://github.com/payals/hobnail/actions) runs portable checks
-and the source/history security scan on pushes and pull requests. The security
-scan also has a weekly Monday 06:37 UTC schedule. Dependabot is configured for
-weekly Python-package and GitHub Actions version-update proposals.
+and the source/history security scan on pushes and pull requests. It also checks
+the pinned MCP dependency set, installs the optional package from verified
+wheels, and exercises the actual stdio protocol with a synthetic transport.
+Database and native application consequences have separate integration checks.
+The security workflow has a weekly Monday 06:37 UTC schedule. Dependabot covers
+core and optional Python manifests and GitHub Actions version-update proposals.
 
 There is **no automatic deployment, PyPI publication, Docker image push or
-GitHub release workflow**. CodeQL, dependency-review enforcement and the
+GitHub release workflow**. CodeQL, GitHub dependency-graph review and the
 proposed branch rules are separate configurations, not implied by a green CI
 run. [Current CI/CD and maintenance details](docs/MAINTENANCE.md) distinguishes
 active checks from proposals and runtime qualifications.

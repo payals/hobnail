@@ -1,7 +1,7 @@
 ---
 name: hobnail
-description: Author, validate and exercise exact-work accountability contracts with the repository-local Hobnail protocol and native Codex tools.
-compatibility: Native Codex. Uses the existing Python and PostgreSQL environment; no OMX, global skill install or third-party Python dependencies.
+description: Author, validate and exercise exact-work accountability contracts with the repository-local Hobnail protocol through your chosen developer or agent workflow.
+compatibility: Plain Markdown guidance for tools that can read repository context and use the SDK, JSON CLI or optional MCP adapter. Uses the existing Python and PostgreSQL environment; optional MCP dependencies are separate.
 ---
 
 # Hobnail contract authoring and use
@@ -11,13 +11,24 @@ independent checks and an explicitly protected action. It does not grant
 permission, create a new acceptance authority or activate a runtime. Follow
 the owner and directory instructions and the task's existing authorization.
 When first applying this skill, name it and link this file in the progress
-update. No global registration is needed to read and use it with native Codex.
+update. No global registration is needed to read and use this Markdown guide.
+If your tool does not load it or the root `AGENTS.md` automatically, provide the
+files as repository context through its normal interface.
 
 Read [the protocol](../../docs/CONTRACT.md) and the task-relevant sections of
 [operations](../../docs/OPERATIONS.md). Reconcile them with actual source and
-runtime evidence. Use the smallest bounded workflow; native subagents may own
-independent implementation, review or verification tasks. Do not invoke OMX or
-change shared instructions/configuration to use this guide.
+runtime evidence. Use your chosen coding agent, runtime or orchestrator and the
+smallest bounded workflow. When supported, subagents may own independent
+implementation, review or verification tasks. Do not change shared instructions
+or global configuration merely to use this guide.
+
+Core Hobnail requires no model-provider account. Keep your tool's existing
+subscription, API or local-model authentication and billing arrangement; client
+features and provider terms determine what is available. Use an interface the
+client supports, as described in [the agent guide](../../docs/AGENT-GUIDE.md),
+without assuming universal client compatibility. Named advisor integrations
+have separate explicit requirements and remain optional. Keep provider secrets
+out of prompts, contracts and evidence.
 
 ## Establish the actual goal
 

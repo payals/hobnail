@@ -15,14 +15,38 @@ failure retention and uncertain-effect reconciliation remain mandatory.
 
 ## Availability for new users
 
-The qualified implementation is in this repository, but there is no published
-Hobnail image, Compose quick start or public-only build recipe for the exact
-reviewed archives. The assembler needs reviewed closure inventories and pinned
-source metadata/layers that are not included in this source export. The rootfs
-archives are not distributed here either. The command below is for operators
-who already have those separately reviewed artifacts; it is not an installation
-shortcut from a fresh clone. See [INSTALLATION.md](INSTALLATION.md#linux-and-docker)
-for the available SDK path and the remaining Docker packaging gap.
+The repository now includes the [explicit file inventories](../docker/source-closure.json)
+and a fixed-source download/assembly helper. It recreates the exact reviewed
+archives from pinned official Docker Library manifests and layers. This is
+reproducible assembly of those binary inputs, not a rebuild of PostgreSQL or
+Python from source. No prebuilt Hobnail image or Compose service is published.
+
+From a fresh source checkout with the core environment installed:
+
+```sh
+docker_build_parent="$(.venv/bin/python -c 'from pathlib import Path; import tempfile; print(Path(tempfile.mkdtemp(prefix="hobnail-docker-build-")).resolve())')"
+.venv/bin/python scripts/prepare_docker_sources.py --download --output "$docker_build_parent/prepared"
+```
+
+The helper retrieves only fixed official repositories anonymously, checks exact
+metadata/layer hashes, verifies decompressed layer identities, and compares both
+assembled archive hashes with `docker/images.lock.json`. It does not execute the
+archives or call Docker. Success prints `"status": "prepared"`; the archives are
+in `$docker_build_parent/prepared/rootfs` and `preparation.json` records the
+result. Download, integrity, unsupported redirect and interrupted-run failures
+remain in the new directory. Existing output directories refuse.
+
+For an offline rebuild, use `--source-cache` with the earlier `prepared/sources`
+directory and a different new output path. The cache stays read-only. A changed
+archive, file inventory, assembler or upstream descriptor refuses. This process
+does not refresh vulnerability dispositions or authorize image redistribution.
+
+The [qualification command](#run-the-bounded-qualification) below executes the
+archives under their reviewed boundaries and then retires the owned runtime.
+It requires the exact supported Docker host and separately reviewed execution
+authority. It is an owned reference exercise, not a persistent production service
+or a Docker deployment of the optional MCP server. See [installation](INSTALLATION.md#linux-and-docker)
+for the SDK path and [MCP setup](MCP.md) for the separate agent interface.
 
 ## Scope and trusted components
 
@@ -335,6 +359,30 @@ Its private storage location is deliberately not part of the public source.
 The hash identifies retained evidence, not a transferable deployment seal.
 Seeded failure controls and the parts fixture remain distinct from the actual
 source-inventory delivery; neither measures autonomous project benefit.
+
+## September 27 code-update qualification
+
+The updated core passed the unchanged six actual Docker integration tests in
+408.394 seconds, with no errors, failures or skips. All eight frozen criteria
+were independently traced through 301 observations and 543 assertions, including
+actual lifetime exhaustion, held SQL-session retirement, exact inventory
+publication, 96 audit events and lifecycle fault controls.
+
+All 37 deployed source files matched the protected snapshots, delivered
+inventory and final reviewed core bytes. The repository HEAD advanced during
+packaging work outside that runtime source set; this result establishes unchanged runtime bytes, not
+an unchanged whole-repository HEAD. All 401 main and 40 fault container IDs were
+absent at independent readback. The 16 pre-existing container states, 57 prior
+volumes, eight networks and 16 default-visible image IDs were preserved. Six new
+owned volumes and four import IDs remain retained as evidence. The image
+comparison does not claim a complete before/after inventory of hidden images.
+
+The exact archives were also reconstructed from a fresh anonymous download of
+the pinned official sources using the public recipe above. Their full-file
+hashes match the lock. The new qualification receipt has SHA-256
+`9d522575a81174b68ed3b047019612eb62cb6882e5fa6388f5d86c218c594a0f`. Earlier failed runs and deliberately failed cleanup controls remain
+failed and retained. This is a core Docker reference result; the optional MCP
+server is not included in these container images or qualified inside Docker.
 
 ## Run the bounded qualification
 

@@ -30,6 +30,12 @@ checks, validator identities, generation and freshness. A passing check proves
 only its declared meaning. A human-approved but incomplete contract remains
 incomplete. Discovery suggestions and LLM recommendations never activate policy.
 
+Acceptance receipts also reference immutable structural proofs of the required
+passing check set. These proofs preserve historical facts; current eligibility
+and dispatch still recheck time-sensitive authority and freshness. They do not
+make an administrator unable to forge data or establish historical authorization
+from present-day credentials.
+
 An API `ok` means the operation was recorded successfully. It does not by itself
 mean a candidate passed or an action completed: inspect `status`, `data.state`,
 the authoritative acceptance result and the independent observation. In
@@ -49,6 +55,17 @@ Supply runtime secrets explicitly and keep them out of contracts, artifacts,
 metadata, receipts, command arguments and source control. The provider's secret
 value has a redacted representation; applications must not log `.reveal()`.
 The SDK and installer do not discover personal libpq credentials or services.
+
+The optional [MCP adapter](docs/MCP.md) requires an explicitly named private
+worker configuration and checks its stable principal and worker role through the
+authenticated database API at startup. It exposes only named worker operations
+over stdio, with no raw SQL or privileged-role tools. Contract activation,
+trusted input registration, verification and observation remain outside that
+worker interface. Protect its configuration and launcher from untrusted edits.
+Stdio does not provide OS isolation or remote authentication. Framework settings,
+dotenv discovery and telemetry are disabled before optional framework imports.
+The core SDK has no third-party Python dependencies; the separate MCP package
+uses an exact reviewed lock and a current fail-closed dependency check.
 
 PostgreSQL password expiry blocks new authentication, not all existing
 sessions. Hobnail checks current expiry for API calls; confirmed native provider
@@ -80,9 +97,9 @@ approved work units; they are not a database connection or denial-of-service
 rate limiter. Configure operational resource limits separately.
 
 No migration may silently weaken an invariant, change applied migration bytes,
-reset consumed budgets or reinterpret old failures. This repository is currently
-unpublished; migration files are under active development. Once deployed as a
-released revision, preserve its hashes and add a new migration for changes.
+reset consumed budgets or reinterpret old failures. Preserve deployed migration
+hashes and add a new migration for changes. The public repository contains the
+maintained source; its existence does not qualify every deployment or revision.
 Recovery verifies effective privileges as well as persisted data. Requalify
 affected boundaries after code, policy, credential or deployment changes.
 
@@ -95,7 +112,7 @@ for security issues; do not open a public issue containing exploit details,
 credentials or sensitive deployment data. You may need to sign in to GitHub.
 
 The [support matrix](docs/SUPPORT.md) describes the checked configurations.
-Source/package version 0.2.0 does not imply a response-time commitment or a
+Source/package version 0.3.0 does not imply a response-time commitment or a
 production support SLA. For a deployment-specific issue, also contact that
 deployment's operator through an established private channel.
 

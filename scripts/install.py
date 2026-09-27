@@ -130,6 +130,8 @@ SELECT to_regclass('hobnail.migrations') IS NOT NULL AS has_ledger \gset
     source.extend(["RESET ROLE;", r"""
 DO $finish$
 BEGIN
+ -- Catalog expression rendering must not depend on a caller's search path.
+ PERFORM pg_catalog.set_config('search_path','pg_catalog',true);
  IF EXISTS(SELECT FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
     WHERE n.nspname='hobnail' AND c.relowner<>(SELECT oid FROM pg_roles WHERE rolname='hobnail_owner'))
     OR EXISTS(SELECT FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
@@ -144,11 +146,53 @@ BEGIN
       OR NOT coalesce(p.proconfig @> ARRAY['search_path=pg_catalog, hobnail, pg_temp'],false))) THEN
   RAISE EXCEPTION 'Hobnail function security drift detected';
  END IF;
- IF EXISTS(SELECT FROM unnest(ARRAY['audit','plugins','contracts','approvals','artifacts','snapshots','results','acceptances','reservations','idempotency','effect_reports','credential_profiles','credential_requests','credential_events','qualifications']) ledger(name)
+ IF EXISTS(SELECT FROM unnest(ARRAY['audit','plugins','contracts','approvals','artifacts','snapshots','results','acceptances','acceptance_proofs','reservations','idempotency','effect_reports','credential_profiles','credential_requests','credential_events','qualifications']) ledger(name)
    WHERE NOT EXISTS(SELECT FROM pg_trigger t WHERE t.tgrelid=to_regclass('hobnail.'||ledger.name)
     AND t.tgname=CASE WHEN ledger.name='audit' THEN 'audit_immutable' ELSE 'immutable' END
     AND t.tgenabled IN ('O','A') AND t.tgfoid='hobnail.immutable()'::regprocedure AND (t.tgtype::integer & 56)=56)) THEN
   RAISE EXCEPTION 'Hobnail ledger enforcement drift detected';
+ END IF;
+ IF NOT EXISTS(SELECT FROM pg_trigger t
+    WHERE t.tgrelid='hobnail.acceptances'::regclass AND t.tgname='acceptance_requires_proof'
+      AND t.tgenabled IN ('O','A') AND NOT t.tgisinternal AND t.tgtype=7
+      AND t.tgfoid='hobnail.require_acceptance_proof()'::regprocedure
+      AND t.tgqual IS NULL AND t.tgnargs=0)
+    OR NOT EXISTS(SELECT FROM pg_constraint c
+    WHERE c.conrelid='hobnail.acceptances'::regclass AND c.conname='acceptances_proof'
+      AND c.contype='f' AND c.confrelid='hobnail.acceptance_proofs'::regclass
+      AND c.conenforced AND c.convalidated AND NOT c.condeferrable AND NOT c.condeferred
+      AND c.confmatchtype='s' AND c.confupdtype='a' AND c.confdeltype='a'
+      AND c.conkey=ARRAY[
+       (SELECT attnum FROM pg_attribute WHERE attrelid=c.conrelid AND attname='candidate_id'),
+       (SELECT attnum FROM pg_attribute WHERE attrelid=c.conrelid AND attname='generation'),
+       (SELECT attnum FROM pg_attribute WHERE attrelid=c.conrelid AND attname='binding_digest')]
+      AND c.confkey=ARRAY[
+       (SELECT attnum FROM pg_attribute WHERE attrelid=c.confrelid AND attname='candidate_id'),
+       (SELECT attnum FROM pg_attribute WHERE attrelid=c.confrelid AND attname='generation'),
+       (SELECT attnum FROM pg_attribute WHERE attrelid=c.confrelid AND attname='binding_digest')]
+      AND (SELECT count(*) FROM pg_trigger t WHERE t.tgconstraint=c.oid)=4
+      AND NOT EXISTS(SELECT FROM (VALUES
+       (c.conrelid,'RI_FKey_check_ins',5), (c.conrelid,'RI_FKey_check_upd',17),
+       (c.confrelid,'RI_FKey_noaction_del',9), (c.confrelid,'RI_FKey_noaction_upd',17)
+      ) expected(relation,function_name,trigger_type)
+      WHERE NOT EXISTS(SELECT FROM pg_trigger t JOIN pg_proc p ON p.oid=t.tgfoid
+       JOIN pg_namespace n ON n.oid=p.pronamespace
+       WHERE t.tgconstraint=c.oid AND t.tgrelid=expected.relation AND t.tgtype=expected.trigger_type
+         AND t.tgisinternal AND t.tgenabled IN ('O','A') AND n.nspname='pg_catalog'
+         AND p.proname=expected.function_name))) THEN
+  RAISE EXCEPTION 'Hobnail acceptance proof enforcement drift detected';
+ END IF;
+ IF EXISTS(SELECT FROM (VALUES
+   ('acceptance_proof_generation',$definition$CHECK ((generation > 0))$definition$),
+   ('acceptance_proof_binding',$definition$CHECK (hobnail.is_digest(binding_digest))$definition$),
+   ('acceptance_proof_object',$definition$CHECK ((jsonb_typeof(proof) = 'object'::text))$definition$),
+   ('acceptance_proof_digest',$definition$CHECK ((hobnail.is_digest(proof_digest) AND (proof_digest = hobnail.digest(proof))))$definition$),
+   ('acceptance_proof_identity',$definition$CHECK (((NOT (((proof ->> 'candidate_id'::text))::bigint IS DISTINCT FROM candidate_id)) AND (NOT (((proof ->> 'generation'::text))::integer IS DISTINCT FROM generation)) AND (NOT ((proof ->> 'binding_digest'::text) IS DISTINCT FROM binding_digest))))$definition$)
+  ) expected(name,definition)
+  WHERE NOT EXISTS(SELECT FROM pg_constraint c WHERE c.conrelid='hobnail.acceptance_proofs'::regclass
+   AND c.conname=expected.name AND c.contype='c' AND c.conenforced AND c.convalidated
+   AND pg_get_constraintdef(c.oid,false)=expected.definition)) THEN
+  RAISE EXCEPTION 'Hobnail acceptance proof check enforcement drift detected';
  END IF;
  EXECUTE format('REVOKE CREATE ON DATABASE %I FROM hobnail_owner',current_database());
 END $finish$;

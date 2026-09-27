@@ -14,9 +14,11 @@ import math
 import os
 from pathlib import Path
 import re
+import selectors
 import shutil
 import subprocess
 import tempfile
+import time
 from typing import Any, Mapping, Protocol
 
 
@@ -26,6 +28,88 @@ class TransportError(RuntimeError):
 
 class TransportTimeout(TransportError):
     """The client killed and reaped its connection after the configured deadline."""
+
+
+class TransportOutputLimit(TransportError):
+    """A bounded client killed/reaped its child without an authoritative reply."""
+
+
+def _stop_owned_child(process: subprocess.Popen) -> None:
+    if process.poll() is None:
+        try:
+            process.kill()
+        except ProcessLookupError:
+            pass
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        raise TransportError("psql child cleanup is unconfirmed; operation outcome is unknown") from None
+
+
+def _bounded_psql(arguments, sql, environment, timeout, stdout_limit):
+    """Capture bounded pipe bytes with a deadline covering writes and reads.
+
+    No preexec_fn, shell, credential discovery or retry. Only this Popen child's
+    PID is killed; PostgreSQL transaction outcome remains unknown on interruption.
+    """
+    payload = sql.encode("utf-8")
+    deadline = time.monotonic() + timeout
+    process = subprocess.Popen(arguments, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, env=environment, bufsize=0)
+    buffers = {"stdout": bytearray(), "stderr": bytearray()}
+    offset = 0
+    try:
+        with selectors.DefaultSelector() as selector:
+            for name, stream in (("stdin", process.stdin), ("stdout", process.stdout), ("stderr", process.stderr)):
+                os.set_blocking(stream.fileno(), False)
+                if name == "stdin" and not payload:
+                    stream.close()
+                else:
+                    selector.register(stream, selectors.EVENT_WRITE if name == "stdin" else selectors.EVENT_READ, name)
+            while selector.get_map():
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise subprocess.TimeoutExpired(arguments, timeout)
+                for key, _ in selector.select(remaining):
+                    if key.data == "stdin":
+                        try:
+                            offset += os.write(key.fd, payload[offset:offset + 65536])
+                        except BlockingIOError:
+                            continue
+                        except BrokenPipeError:
+                            offset = len(payload)
+                        if offset == len(payload):
+                            selector.unregister(key.fileobj)
+                            key.fileobj.close()
+                    else:
+                        try:
+                            block = os.read(key.fd, 65536)
+                        except BlockingIOError:
+                            continue
+                        if not block:
+                            selector.unregister(key.fileobj)
+                            key.fileobj.close()
+                            continue
+                        limit = stdout_limit if key.data == "stdout" else 65536
+                        if len(buffers[key.data]) + len(block) > limit:
+                            raise TransportOutputLimit("psql output exceeded its configured bound; operation outcome is unknown")
+                        buffers[key.data].extend(block)
+            process.wait(timeout=max(0, deadline - time.monotonic()))
+        try:
+            stdout = buffers["stdout"].decode("utf-8")
+        except UnicodeError:
+            raise TransportError("psql returned invalid UTF-8; operation outcome is unknown") from None
+        return subprocess.CompletedProcess(arguments, process.returncode, stdout, buffers["stderr"].decode("utf-8", errors="replace"))
+    except subprocess.TimeoutExpired:
+        _stop_owned_child(process)
+        raise TransportTimeout("psql timed out; operation outcome is unknown; reconcile before retrying") from None
+    except BaseException:
+        _stop_owned_child(process)
+        raise
+    finally:
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is not None and not stream.closed:
+                stream.close()
 
 
 class PasswordAuthenticationFailed(TransportError):
@@ -140,15 +224,19 @@ def validate_envelope(value: Any) -> dict[str, Any]:
 class PsqlTransport:
     """Run installed psql with safe encoded data on stdin and no retry behavior."""
 
-    def __init__(self, connection: Connection, *, psql: str = "psql", timeout: float = 30.0):
+    def __init__(self, connection: Connection, *, psql: str = "psql", timeout: float = 30.0,
+                 max_output_bytes: int | None = None):
         if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("timeout must be positive and finite")
         executable = shutil.which(psql)
         if executable is None:
             raise ValueError("installed psql executable was not found")
+        if max_output_bytes is not None and (type(max_output_bytes) is not int or not 1 <= max_output_bytes <= 64 * 1024 * 1024):
+            raise ValueError("max_output_bytes must be within 1 byte and 64 MiB")
         self.connection = connection
         self.psql = str(Path(executable).absolute())
         self.timeout = timeout
+        self.max_output_bytes = max_output_bytes
 
     def call(self, operation: str, payload: Mapping[str, Any]) -> dict[str, Any]:
         if not isinstance(operation, str) or not operation or "\x00" in operation:
@@ -211,8 +299,11 @@ class PsqlTransport:
                 " ".join(f"{key}={_literal(value)}" for key, value in options.items()),
             ]
             try:
-                result = subprocess.run(args, input=sql, text=True, encoding="utf-8", capture_output=True,
-                                        timeout=self.timeout, env=env, check=False)
+                if self.max_output_bytes is None:
+                    result = subprocess.run(args, input=sql, text=True, encoding="utf-8", capture_output=True,
+                                            timeout=self.timeout, env=env, check=False)
+                else:
+                    result = _bounded_psql(args, sql, env, self.timeout, self.max_output_bytes)
             except subprocess.TimeoutExpired as exc:
                 raise TransportTimeout("psql timed out; operation outcome is unknown; reconcile before retrying") from None
             except OSError as exc:

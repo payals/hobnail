@@ -12,12 +12,17 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 PROFILE = "hobnail-portable-posix-v1"
 SELECTED = {
+    "test_mcp_dependencies.py": "Exact dependency metadata, lock and network refusal checks using inert registry fixtures; no downloads or package execution.",
+    "test_mcp_adapter.py": "Dependency-free worker adapter, configuration, package metadata and bounded stdio client fixtures; no MCP framework or database runtime.",
+    "test_client_limits.py": "Actual owned local subprocess output, backpressure, timeout and retirement checks; no database or third-party execution.",
+    "test_docker_sources.py": "Pinned source assembly and anonymous retrieval checks with inert fixtures; no acquired image execution.",
     "test_jev_advice.py": "Offline advisory recipes, bounded HTTP fixtures and private receipt handling; no model accuracy or runtime authority claim.",
     "test_contracts.py": "Closed contract shapes and non-authoritative discovery.",
     "test_client.py": "SDK/CLI transport and JSON checks with controlled subprocess results.",
@@ -45,7 +50,11 @@ EXCLUDED_GROUPS = {
          "test_credential_kernel.py", "test_credential_recovery.py", "test_credentials.py",
          "test_dev_cluster.py", "test_explicit_dev_cluster.py", "test_external_credentials.py",
          "test_git_effects.py", "test_kernel_acceptance.py", "test_password_authentication.py",
-         "test_recovery.py", "test_research_integration.py")),
+         "test_recovery.py", "test_research_integration.py", "test_typed_operations.py",
+         "test_acceptance_proofs.py")),
+    "optional_mcp_runtime": (
+        "Requires the reviewed optional MCP dependency lock, actual stdio server, owned PostgreSQL and native macOS role services.",
+        ("test_mcp_runtime.py", "test_mcp_protocol.py")),
     "native_macos": (
         "Requires actual macOS confinement and, where composed, owned PostgreSQL; not a portable substitute.",
         ("test_end_to_end.py", "test_isolation.py", "test_native_application.py", "test_native_effects.py",
@@ -71,6 +80,46 @@ class PortableCheckError(RuntimeError):
     pass
 
 
+def private_inventory(root):
+    """A private checkout may add explicit classifications outside public source.
+
+    Missing this optional file never hides an on-disk module: ordinary unknown-
+    module detection still refuses. Private entries cannot override public ones.
+    """
+    path = root / "release/private-portable-tests.json"
+    if not path.exists() and not path.is_symlink():
+        return [], None
+    if path.is_symlink() or path.resolve(strict=True) != path or not path.is_file():
+        raise PortableCheckError("private_inventory_not_regular_canonical")
+    if path.stat().st_size > 65536:
+        raise PortableCheckError("private_inventory_too_large")
+    raw = path.read_bytes()
+    if len(raw) > 65536:
+        raise PortableCheckError("private_inventory_too_large")
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise PortableCheckError("duplicate_private_inventory_key")
+            value[key] = item
+        return value
+    try:
+        value = json.loads(raw, object_pairs_hook=unique)
+    except (ValueError, UnicodeError, RecursionError):
+        raise PortableCheckError("private_inventory_invalid_json") from None
+    if (not isinstance(value, dict) or set(value) != {"schema", "tests"}
+            or value["schema"] != "hobnail-private-test-inventory-v1"
+            or not isinstance(value["tests"], list) or len(value["tests"]) > 128):
+        raise PortableCheckError("private_inventory_invalid_schema")
+    for entry in value["tests"]:
+        if (not isinstance(entry, dict) or set(entry) != {"file", "category", "reason"}
+                or not isinstance(entry["file"], str) or not re.fullmatch(r"test_[a-z0-9_]+\.py", entry["file"])
+                or not isinstance(entry["category"], str) or entry["category"] not in {"portable", "adjacent_project"}
+                or not isinstance(entry["reason"], str) or len(entry["reason"].strip()) < 12):
+            raise PortableCheckError("private_inventory_invalid_entry")
+    return value["tests"], hashlib.sha256(raw).hexdigest()
+
+
 def describe(root: Path = ROOT) -> dict:
     root = Path(root).resolve()
     classified = {name: ("portable", reason) for name, reason in SELECTED.items()}
@@ -79,6 +128,15 @@ def describe(root: Path = ROOT) -> dict:
             if name in classified:
                 raise PortableCheckError("duplicate_test_classification:" + name)
             classified[name] = category, reason
+    private, private_hash = private_inventory(root)
+    selected_names = set(SELECTED)
+    for entry in private:
+        name = entry["file"]
+        if name in classified:
+            raise PortableCheckError("duplicate_test_classification:" + name)
+        classified[name] = entry["category"], entry["reason"]
+        if entry["category"] == "portable":
+            selected_names.add(name)
     tests = root / "tests"
     # Match unittest's normal discovery name pattern, including names without
     # an underscore, so a new discoverable file cannot evade classification.
@@ -86,7 +144,7 @@ def describe(root: Path = ROOT) -> dict:
     unknown = sorted(present.keys() - classified.keys())
     if unknown:
         raise PortableCheckError("unclassified_test_files:" + ",".join(unknown))
-    missing = sorted(SELECTED.keys() - present.keys())
+    missing = sorted(selected_names - present.keys())
     if missing:
         raise PortableCheckError("required_portable_tests_missing:" + ",".join(missing))
     for name, path in present.items():
@@ -96,11 +154,12 @@ def describe(root: Path = ROOT) -> dict:
     for name in sorted(classified):
         category, reason = classified[name]
         rows.append({"file": "tests/" + name, "module": Path(name).stem, "category": category,
-                     "selected": name in SELECTED, "present": name in present, "reason": reason,
+                     "selected": name in selected_names, "present": name in present, "reason": reason,
                      "sha256": hashlib.sha256(present[name].read_bytes()).hexdigest() if name in present else None})
     return {"schema": "hobnail-portable-checks-v1", "profile": PROFILE, "status": "listed",
             "scope": "explicit stdlib/Git POSIX source checks; no runtime or adjacent-project qualification",
             "discovery_pattern": "tests/**/test*.py",
+            "private_inventory_sha256": private_hash,
             "selected": [row for row in rows if row["selected"]],
             "nonselected": [row for row in rows if not row["selected"]],
             "unclassified": [], "selection_changed_on_failure": False}

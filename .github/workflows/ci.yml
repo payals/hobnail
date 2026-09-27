@@ -91,4 +91,43 @@ jobs:
         working-directory: source
         shell: bash
         run: |
-          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -m compileall -q src scripts tests build_backend.py
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -m compileall -q src scripts tests build_backend.py integrations/mcp
+      - name: Check and install the exact optional MCP dependencies
+        working-directory: source
+        shell: bash
+        run: |
+          set -eu
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python scripts/check_mcp_dependencies.py \
+            --profile linux-x86_64-py312 --download-dir ../mcp-wheels --receipt ../mcp-dependencies.json
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('../mcp-dependencies.json').read_text())
+          manifest = Path('security/mcp-dependencies.json').read_bytes()
+          lock = Path('integrations/mcp/requirements-linux-x86_64-py312.lock').read_bytes()
+          assert receipt['status'] == 'passed' and receipt['wheel_bytes_verified'] is True
+          assert receipt['profile'] == 'linux-x86_64-py312'
+          assert hashlib.sha256(manifest).hexdigest() == receipt['manifest_sha256']
+          assert hashlib.sha256(lock).hexdigest() == receipt['lock_sha256']
+          PY
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 PIP_CONFIG_FILE=/dev/null .venv/bin/python -m pip --isolated install \
+            --no-index --find-links ../mcp-wheels --require-hashes --only-binary=:all: \
+            -r integrations/mcp/requirements-linux-x86_64-py312.lock
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 PIP_CONFIG_FILE=/dev/null .venv/bin/python -m pip --isolated install \
+            --no-index --no-deps --no-build-isolation ./integrations/mcp
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -m pip --isolated check
+      - name: Exercise installed MCP entry points and actual stdio protocol fixtures
+        working-directory: source
+        shell: bash
+        run: |
+          set -eu
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/hobnail-mcp --help
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -I -m hobnail_mcp --help
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -I - <<'PY'
+          import sys
+          from pathlib import Path
+          import hobnail_mcp
+          assert Path(hobnail_mcp.__file__).resolve().is_relative_to(Path(sys.prefix).resolve())
+          PY
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python -m unittest discover -s tests -p test_mcp_protocol.py -v

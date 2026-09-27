@@ -1,0 +1,16 @@
+[build-system]
+requires = []
+build-backend = "build_backend"
+backend-path = ["."]
+
+[project]
+name = "hobnail-mcp"
+version = "0.1.0"
+description = "Worker-only stdio MCP adapter for Hobnail"
+requires-python = ">=3.11"
+license = "MIT"
+readme = "README.md"
+dependencies = ["hobnail==0.3.0", "fastmcp-slim[server]==4.0.5"]
+
+[project.scripts]
+hobnail-mcp = "hobnail_mcp.server:main"

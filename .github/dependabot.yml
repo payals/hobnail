@@ -1,9 +1,11 @@
 version: 2
 updates:
-  # These ecosystems currently declare no third-party dependencies or actions.
+  # Core stays dependency-free; the optional MCP distribution has reviewed pins.
   # Enabling the repository's security-update feature is a separate live step.
   - package-ecosystem: pip
-    directory: /
+    directories:
+      - /
+      - /integrations/mcp
     schedule:
       interval: weekly
       day: monday

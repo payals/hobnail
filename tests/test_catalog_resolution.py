@@ -46,7 +46,7 @@ AND NOT coalesce(p.proconfig @> ARRAY['search_path=pg_catalog, hobnail, pg_temp'
         install(self.dsn, psql=str(self.cluster.bin_dir / "psql"))
         after = self.cluster.psql("SELECT version,sha256 FROM hobnail.migrations ORDER BY version").stdout
         self.assertEqual(after, before)
-        self.assertEqual(len(before.strip().splitlines()), 4)
+        self.assertEqual(len(before.strip().splitlines()), 6)
 
     def test_caller_temp_table_does_not_block_valid_worker_identity(self):
         binding = {"login": "catalog_worker", "principal": "catalog-worker", "role": "worker",

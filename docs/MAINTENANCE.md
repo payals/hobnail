@@ -10,14 +10,21 @@ checks, not a runtime qualification or deployment approval.
 
 | Automation | Trigger | What it checks |
 | --- | --- | --- |
-| `Portable source checks` | Push, pull request, manual dispatch | Fresh public checkout, explicit portable POSIX tests, offline SDK install and CLI example, then Python syntax compilation on Ubuntu 24.04. |
-| `Source security checks` | Push, pull request, manual dispatch, Monday 06:37 UTC | Current source and complete reachable public history; exact reviewed synthetic exceptions remain visible. Optional dependency review runs only when configured. |
-| Dependabot version updates | Weekly, Monday; Python packages 06:23 UTC and Actions 06:43 UTC | Proposes version changes; it does not approve or merge them. These ecosystems currently declare no third-party packages or Actions. |
+| `Portable source checks` | Push, pull request, manual dispatch | Explicit portable POSIX tests, offline SDK install/example and syntax checks; current MCP dependency screening, hash-locked offline installation, installed entry-point checks and actual stdio protocol fixtures on Ubuntu 24.04/Python 3.12. |
+| `Source security checks` | Push, pull request, manual dispatch, Monday 06:37 UTC | Current source and complete reachable public history with exact synthetic exceptions, plus current pinned MCP dependency metadata/advisory checks. The separate GitHub dependency-graph comparison runs only when configured. |
+| Dependabot version updates | Weekly, Monday; Python packages 06:23 UTC and Actions 06:43 UTC | Proposes changes for core and optional MCP package manifests; it does not approve or merge them. No external workflow Actions are declared. |
 
 The [workflow files](../.github/workflows/) define the commands and permissions;
 [Actions](https://github.com/payals/hobnail/actions) records actual executions.
 Portable tests do not run PostgreSQL, macOS confinement, OpenBao or Docker
 qualification. Syntax compilation is not runtime execution.
+
+The MCP protocol fixtures execute the actual framework with a synthetic
+database transport and source package. Separate installed-origin/help checks
+prove that the optional distribution is installed. Neither establishes database
+authority, native isolation or application integration; those require the actual
+[integration runs](INTEGRATION-TESTING.md). A dependency check failure stops the
+optional install, with no fallback to another version or package index.
 
 There is **no automatic CD**: no deployment, PyPI publishing, Docker registry
 push, release tagging or GitHub release workflow is configured. The installed
@@ -110,10 +117,13 @@ runtime applicability. [Dependency-review API](https://docs.github.com/en/rest/d
 
 ## Dependabot and artifact review
 
-The project currently has no third-party Python requirements, build requirements,
-or workflow `uses:` actions. Dependabot configuration establishes a future
-proposal path; it cannot produce meaningful updates to dependencies that do not
-exist. `docker/images.lock.json`, native Python/PostgreSQL/OpenBao executables,
+The core has no third-party Python requirements or downloaded build backend.
+The optional MCP distribution has exact direct requirements and reviewed
+platform locks. Dependabot covers both Python manifest directories with the
+same schedule and cooldown. A proposed update must include a reviewed complete
+lock/manifest change and pass current dependency screening; changing the package
+version alone does not establish compatibility or installation authority.
+No workflow `uses:` actions are declared. `docker/images.lock.json`, native Python/PostgreSQL/OpenBao executables,
 Docker Desktop and operating-system packages are outside these two ecosystems.
 Their pinned artifacts keep the separate authoritative registry, publication-age,
 integrity, provenance, vulnerability and runtime review requirements.

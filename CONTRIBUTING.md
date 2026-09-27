@@ -13,6 +13,23 @@ Start with [installation](docs/INSTALLATION.md) for an installed SDK/CLI, or use
 the source-only test commands below. Publication and deployment still follow
 the repository owner's authorization.
 
+## Choose your development tools
+
+Contribute with your preferred editor, coding agent, runtime or orchestrator.
+Hobnail's core needs no model-provider account. Keep the tool's existing
+subscription, API-key or local-model authentication and billing arrangement;
+available features and plan terms depend on that tool and provider. Hobnail does
+not promise that subscriptions and API access are interchangeable.
+
+An agent can connect through an interface it supports: the optional
+[worker MCP adapter](docs/MCP.md), Python SDK or JSON CLI. Actual client and
+runtime capabilities still need to match the documented setup. If your tool
+does not load [AGENTS.md](AGENTS.md) automatically, supply it as repository
+context through the tool's normal interface. The [agent guide](docs/AGENT-GUIDE.md)
+covers the workflow without requiring a global plugin or configuration change.
+Named advisory integrations are optional and have their own explicit provider
+requirements; they do not add a provider prerequisite to core development.
+
 ## Development environment
 
 Use `.venv/bin/python` from the project's existing reviewed environment. All new
@@ -20,10 +37,16 @@ reviewed Python requirements belong in this `.venv`; do not use global pip.
 If the project environment is absent, create it with an existing reviewed
 Python 3.11+ interpreter: `python3 -m venv .venv`. This does not
 download packages. The package uses Python's
-standard library and has no third-party Python dependencies; source-checkout
+standard library and has no third-party Python dependencies; core source-checkout
 commands do not require `pip install`, a global CLI or a plugin manager.
 Metadata targets Python 3.11+, while the retained native evidence uses Python
 3.14, PostgreSQL 18.3 and macOS. The maintained installer accepts PostgreSQL 18.
+
+The optional MCP distribution has separate reviewed dependencies and runtime
+checks. Follow [MCP setup](docs/MCP.md) before selecting its actual transport or
+native integration tests. Core portable tests do not install that framework.
+See [integration testing](docs/INTEGRATION-TESTING.md) for the complete paths,
+fault controls and isolated application exercise.
 
 Read the current worktree before editing and preserve concurrent changes.
 Propose a narrow change with a concrete before/after outcome. Keep unrelated
@@ -72,7 +95,7 @@ PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -p 'test_end_to_en
 
 The full suite available in the checkout is intentionally stricter about
 prerequisites. It includes private PostgreSQL, macOS isolation, real OpenBao and
-actual Docker runtime checks. Establish the approved artifact/runtime conditions
+actual Docker runtime and optional MCP checks. Establish the approved artifact/runtime conditions
 in [OPENBAO-QUALIFICATION.md](docs/OPENBAO-QUALIFICATION.md) and
 [DOCKER-DEPLOYMENT.md](docs/DOCKER-DEPLOYMENT.md) before running it. Supply the
 canonical reviewed OpenBao executable and the private Docker release-config

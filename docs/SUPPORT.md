@@ -1,6 +1,6 @@
 # Compatibility, maintenance and deprecation
 
-This policy describes the 0.2.0 source candidate and its maintained protocol-1
+This policy describes the 0.3.0 source candidate and its maintained protocol-1
 interfaces. Release checks must identify the exact candidate. Native and Docker
 reference results are evidence for their recorded configuration, not a
 transferable deployment certificate. The source repository is public; packaged release/deployment authority is separate. No support SLA or calendar response
@@ -11,15 +11,15 @@ commitment is promised.
 The SDK/CLI and portable source checks have a macOS/Linux path; the native
 role/parser workflow is macOS-specific. Native Windows onboarding/runtime is
 not supported in this release, and WSL2 is not separately tested. Docker is a
-qualified reference with undistributed runtime/build inputs, not a published
-image that users can install with one command.
+reference with a public pinned-input assembly recipe and an owned qualification
+runner. No prebuilt image or persistent Compose service is published.
 [INSTALLATION.md](INSTALLATION.md) gives the exact available paths and prerequisites.
 
 ## Scope
 
 | Surface | Checked reference scope | Limit |
 | --- | --- | --- |
-| Package/API | Package 0.2.0, protocol 1, `hobnail` schema | Legacy `work`/`eval` records have separate semantics. |
+| Package/API | Package 0.3.0, protocol 1, `hobnail` schema | Legacy `work`/`eval` records have separate semantics. |
 | Database | PostgreSQL 18.3 native and 18.6 in the Docker reference; installer requires major 18 | Other majors refuse. New minor versions need relevant checks. |
 | Python | Python 3.14 native and 3.14.7 in the Docker reference | Python 3.11+ is the metadata compatibility target; not every version is tested. Use a project `.venv`. |
 | Native execution | macOS role processes and restricted parser profile | The host and supervisor remain trusted. Unsupported mandatory backends refuse. |

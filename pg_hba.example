@@ -1,7 +1,9 @@
 # pg_hba.conf lines for Admit. Identity comes from the OS or from a client certificate, never from the agent.
 # The database cannot tell a second OS user from a second machine, and does not need to: identity is the role.
 #
-# Same box, two OS users (worker, grader), bound by a pg_ident map:
+# The verifier's legacy SQL login is grader_role; keep installed mappings compatible.
+# Same box, two OS users (worker, verifier), bound by a pg_ident map:
+# Use the existing verifier OS account name; this example does not rename users or mappings.
 local    admit    actor_role     peer    map=admit
 local    admit    grader_role    peer    map=admit
 #
@@ -16,4 +18,4 @@ host     admit    admit_owner    ::/0           reject
 # pg_ident.conf
 # MAPNAME   SYSTEM-USERNAME   PG-USERNAME
 # admit     worker            actor_role
-# admit     grader            grader_role
+# admit     verifier          grader_role

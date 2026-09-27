@@ -76,6 +76,12 @@ jobs:
             --repository "$PWD" --revision "$GITHUB_SHA" --history \
             --allowlist security/scan-allowlist.json --attribution-policy github-noreply \
             --receipt ../security-scan.json
+      - name: Recheck the pinned optional MCP dependency closure
+        working-directory: source
+        shell: bash
+        run: |
+          env -i PATH=/usr/bin:/bin LANG=C.UTF-8 .venv/bin/python scripts/check_mcp_dependencies.py \
+            --profile linux-x86_64-py312 --receipt ../mcp-dependency-check.json
       - name: Report optional public dependency-review evidence without fallback
         shell: bash
         env:

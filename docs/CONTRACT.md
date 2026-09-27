@@ -84,6 +84,19 @@ creates a new independent authority. A runtime login cannot bind itself or
 another login. Unknown logins are denied. Runtime roles have no table writes,
 ownership, role administration, or access to privileged credential profiles.
 
+`principal.bind` inserts one binding; it does not replace an existing login's
+identity or grants. Rebinding returns `ALREADY_RECORDED`. Issue a fresh scoped
+login and retire the old one through the supported credential lifecycle when a
+new binding is needed. Expiry is managed through that lifecycle, not an extra
+`principal.bind` payload field.
+
+`session.get {}` returns the authenticated caller's `principal_id`, `role`,
+`contracts` and `valid_until`. It accepts no identity fields and returns no
+secret material. The optional MCP launcher uses this operation to confirm its
+configured worker identity. This read is audited like other API operations.
+The [typed SQL reference](TYPED-SQL.md) lists convenience wrappers that call the
+same API with the caller's privileges.
+
 Contract access requires both a registry contract grant and the contract's role
 allowlist. Source registration requires both a registry source grant and the
 active contract's registrar allowlist. Approval authority comes from the
@@ -261,6 +274,15 @@ and every protected dispatch recheck time-sensitive preconditions. A current
 input change or policy activation invalidates eligibility without rewriting the
 historical receipt. Database locks serialize competing policy/input/cancellation
 changes and admissions at the documented authorization point.
+
+Migration 006 adds an immediate insertion check and a foreign-key relationship
+from every acceptance receipt to its immutable proof. The proof records the
+exact candidate/generation/binding and complete declared passing check set,
+including plugin and independent verifier identities. It does not recreate
+historical login authorization or consult current input heads, policy heads or
+the clock when validating an old receipt. Upgrade backfill preserves existing
+receipts and refuses inconsistent immutable evidence rather than inventing proof.
+The use-time eligibility and dispatch checks above remain authoritative.
 
 ## Budgets
 

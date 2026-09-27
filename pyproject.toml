@@ -5,7 +5,7 @@ backend-path = ["."]
 
 [project]
 name = "hobnail"
-version = "0.2.0"
+version = "0.3.0"
 description = "Exact-work accountability and protected action protocol"
 requires-python = ">=3.11"
 license = "MIT"

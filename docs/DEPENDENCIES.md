@@ -1,11 +1,36 @@
 # Runtime dependencies and artifact review
 
-Hobnail's Python implementation uses the standard library and has no third-party
+Hobnail's core Python implementation uses the standard library and has no third-party
 Python package dependencies. Use the project `.venv`; source execution does not
 need `pip install`. PostgreSQL/client tools and platform isolation are external
 runtime prerequisites. The historical native environment used Python 3.14 and
 PostgreSQL 18.3 on macOS. This is not a statement that every installed host tool
 or supported Python version has current vulnerability clearance.
+
+## Optional MCP package
+
+The separate `hobnail-mcp` distribution depends on
+`fastmcp-slim[server]==4.0.5`. Its complete reviewed platform locks are under
+[`integrations/mcp`](../integrations/mcp/README.md), with artifact hashes,
+publication times, dependency metadata and provenance limits in the
+[dependency manifest](../security/mcp-dependencies.json). The
+[MCP installation guide](MCP.md) rechecks current PyPI and OSV evidence before
+installing hash-verified wheels offline. Missing, changed, too-young, yanked,
+prerelease or known-vulnerable inputs refuse installation through that recipe.
+Do not bypass a failed check with an unlocked install.
+
+The checker binds the reviewed dependency graph; it does not independently
+resolve a new graph or cryptographically verify publisher attestations. The
+initial review inspected selected wheel metadata, members and RECORD hashes,
+and recorded missing attestations. A clean known-advisory result cannot exclude
+unknown vulnerabilities. Updating the dependency set requires a new review and
+lock/manifest update, not just a changed version in package metadata.
+
+The framework's server dependency set includes optional authentication, storage
+and keyring libraries. The Hobnail worker entry point disables environment-file
+discovery, inherited framework settings and telemetry before imports; it does
+not enable remote authentication, credential caches or keyring features.
+Dependency availability does not grant those features authority.
 
 ## Credential-provider boundary
 

@@ -8,7 +8,9 @@ The scoped repository instructions are [AGENTS.md](../AGENTS.md).
 
 ## Start here if you are an agent
 
-1. Read the root [AGENTS.md](../AGENTS.md) and the owner's current task.
+1. Read the root [AGENTS.md](../AGENTS.md) and the owner's current task. If your
+   tool does not load it automatically, provide it as repository context using
+   the tool's normal interface.
 2. Follow [INSTALLATION.md](INSTALLATION.md) for the SDK/CLI and the supported
    host path. Use the existing project environment when present.
 3. For application work, follow [NATIVE-APPLICATION.md](NATIVE-APPLICATION.md)
@@ -16,10 +18,27 @@ The scoped repository instructions are [AGENTS.md](../AGENTS.md).
 4. The optional [Hobnail authoring skill](../skills/hobnail/SKILL.md) helps with
    that authoring process. It is not a credential or an approval.
 
-Hobnail does not ship an MCP/FastMCP server or an automatic agent-runtime
-configuration command. Use the Python SDK, JSON CLI or your explicitly reviewed
-transport integration. [ARCHITECTURE.md](ARCHITECTURE.md) describes the actual
-SQL entry point and extension boundaries.
+## Choose your agent and connection
+
+Use the coding agent, runtime or orchestrator you prefer. An agent that can use
+the optional [worker MCP server](MCP.md), Python SDK or JSON CLI can integrate
+through that interface, subject to the client's actual capabilities and the
+documented host/runtime support. Hobnail does not require a particular agent
+vendor, automatically configure your agent, or promise that every client
+supports every interface.
+
+Keep your existing authentication and billing arrangement with that tool:
+subscription access, API credentials or a local model may be appropriate when
+the tool and provider support them. Hobnail's core requires no model-provider
+account. It does not convert a subscription into API access, change provider
+terms or move credentials between runtimes. Do not put model-provider secrets
+in Hobnail contracts, candidate data or evidence.
+
+For MCP, follow the explicit private worker configuration and protected-service
+setup in [MCP.md](MCP.md). For SDK/CLI use, start with
+[installation](INSTALLATION.md) and [the native application example](NATIVE-APPLICATION.md).
+[ARCHITECTURE.md](ARCHITECTURE.md) explains the SQL entry point and authority
+boundaries shared by these interfaces.
 
 ## Two different tasks
 
@@ -39,9 +58,9 @@ provider, verifier or approver credentials to get its work accepted.
    older receipt applies. Preserve other sessions' files and owned runtimes.
 2. State the actual useful outcome, its observable consequences and invariants.
    Separate the intended result from proxy metrics and fixture checks.
-3. Assign small independent work units when parallelism helps. Give each native
-   subagent explicit file ownership, interfaces and verification boundaries;
-   tell it to preserve concurrent work. Native Codex needs no OMX setup.
+3. If your tool supports delegation, assign small independent work units when
+   parallelism helps. Give each subagent explicit file ownership, interfaces
+   and verification boundaries; tell it to preserve concurrent work.
 4. Implement and exercise the real path within the authorized scope. Use fresh
    marked PostgreSQL clusters, synthetic inputs and explicit credentials.
    Preserve the first failure; diagnose its cause before changing one thing.
@@ -114,7 +133,10 @@ The optional [Jev advice helper](JEV-ADVICE.md) can review a supplied claim agai
 evidence or suggest gaps in a proposed contract. It prepares requests offline by
 default and requires an explicit live invocation to send selected input to
 OpenRouter. Its output is advisory application material, never a required-check
-result, approval, acceptance or permission to perform an effect.
+result, approval, acceptance or permission to perform an effect. This named
+integration has its own provider and authentication requirements; neither the
+helper nor an OpenRouter account is a prerequisite for core Hobnail, MCP or
+SDK/CLI use. See its guide before enabling a live call.
 
 Trusted registrars own input snapshots. Approved plugin implementations define
 what each required check establishes. A separately bound verifier evaluates the

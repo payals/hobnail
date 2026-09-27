@@ -55,6 +55,46 @@ class PortableProfileTests(unittest.TestCase):
             finally:
                 path.unlink()
 
+    def test_private_inventory_adds_only_explicit_classifications_and_is_fingerprinted(self):
+        directory = self.root / "release"; directory.mkdir()
+        inventory = directory / "private-portable-tests.json"
+        entry = {"file": "test_private_fixture.py", "category": "portable", "reason": "Owned private fixture with no external runtime."}
+        inventory.write_text(json.dumps({"schema": "hobnail-private-test-inventory-v1", "tests": [entry]}))
+        with self.assertRaisesRegex(check_portable.PortableCheckError, "required_portable_tests_missing"):
+            check_portable.describe(self.root)
+        (self.root / "tests" / entry["file"]).write_text("# declared private fixture\n")
+        first = check_portable.describe(self.root)
+        self.assertTrue(any(row["file"] == "tests/" + entry["file"] for row in first["selected"]))
+        inventory.write_text(inventory.read_text() + "\n")
+        self.assertNotEqual(check_portable.describe(self.root)["private_inventory_sha256"], first["private_inventory_sha256"])
+        inventory.unlink()
+        with self.assertRaisesRegex(check_portable.PortableCheckError, "unclassified_test_files"):
+            check_portable.describe(self.root)
+
+    def test_private_inventory_cannot_override_public_selection_or_escape_test_paths(self):
+        directory = self.root / "release"; directory.mkdir()
+        inventory = directory / "private-portable-tests.json"
+        for name, category in (("test_client.py", "adjacent_project"), ("../test_hidden.py", "portable"),
+                               ("test_private.py", "ignored"), ("test_private.py", [])):
+            entry = {"file": name, "category": category, "reason": "Explicit synthetic invalid inventory entry."}
+            inventory.write_text(json.dumps({"schema": "hobnail-private-test-inventory-v1", "tests": [entry]}))
+            with self.subTest(name=name, category=category), self.assertRaises(check_portable.PortableCheckError):
+                check_portable.describe(self.root)
+        inventory.write_text('{"schema":"one","schema":"two","tests":[]}')
+        with self.assertRaisesRegex(check_portable.PortableCheckError, "duplicate_private_inventory_key"):
+            check_portable.describe(self.root)
+
+    def test_private_inventory_alias_and_malformed_data_refuse(self):
+        directory = self.root / "release"; directory.mkdir()
+        inventory = directory / "private-portable-tests.json"
+        target = self.root / "untrusted.json"; target.write_text("{}")
+        inventory.symlink_to(target)
+        with self.assertRaisesRegex(check_portable.PortableCheckError, "private_inventory_not_regular_canonical"):
+            check_portable.describe(self.root)
+        inventory.unlink(); inventory.write_bytes(b'not-json')
+        with self.assertRaisesRegex(check_portable.PortableCheckError, "private_inventory_invalid_json"):
+            check_portable.describe(self.root)
+
     def test_missing_required_module_and_alias_refuse(self):
         path = self.root / "tests/test_client.py"
         path.unlink()

@@ -56,6 +56,12 @@ or start an MCP server. Keep this source checkout: database migrations, workflow
 scripts, Docker tooling and guides ship with the source, not inside the SDK wheel.
 There is no `CREATE EXTENSION hobnail` installation command.
 
+For an agent that uses MCP, install the separate optional
+[Hobnail MCP adapter](MCP.md) after the core. That guide includes the exact
+dependency check and locks, worker configuration, supported platforms and a
+complete owned workflow. The core install above remains offline and
+dependency-free. SQL applications can use the [typed function reference](TYPED-SQL.md).
+
 ## 2. Try the installed SDK without a database
 
 This inspects a small JSON artifact and suggests checks you could put in a
@@ -138,20 +144,19 @@ a Linux replacement for macOS's native service/parser isolation:
 .venv/bin/python scripts/check_portable.py
 ```
 
-There is currently **no published Hobnail Docker image, Docker Compose quick
-start, or public-only build recipe for the qualified images**. The public tree
-contains the supervisor, assembler, image pins and profiles, but omits the
-reviewed closure inventories, downloaded source layers and derived rootfs
-archives. The assembler cannot recreate the reviewed artifacts from this
-checkout alone. An ordinary upstream PostgreSQL/Python image is not that
-qualified runtime.
+The public source now includes the pinned file inventories and a
+[download/assembly recipe](DOCKER-DEPLOYMENT.md#availability-for-new-users) for
+the exact reference archives. It fetches official digest-pinned inputs, verifies
+their bytes and assembles the archives without executing them. No private
+build-input directory is required.
 
-Maintainers who already have the exact approved artifacts can follow the
-[Docker reference command](DOCKER-DEPLOYMENT.md#run-the-bounded-qualification).
-That is a conditional qualification recipe, not a public Docker installation
-shortcut. The qualified reference is Linux ARM64 on the recorded Docker
-Desktop/Engine/kernel combination; x86 images and other hosts are not qualified
-by that run. A distributable Docker build/install path remains separate work.
+There is **no published Hobnail image or Compose service**. Follow the
+[bounded Docker qualification](DOCKER-DEPLOYMENT.md#run-the-bounded-qualification)
+to exercise the reference and retire its owned resources. The recorded runtime
+is Linux ARM64 on the documented Docker Desktop/Engine/kernel combination;
+other architectures and hosts need their own checks. This is not a persistent
+production deployment or a Docker image containing the optional MCP server.
+An ordinary upstream PostgreSQL/Python image does not supply those boundaries.
 
 ## Troubleshooting
 

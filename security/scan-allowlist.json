@@ -156,6 +156,36 @@
       "rule": "private_evidence_path",
       "match_sha256": "ff28886acbc72ce6dd3bc2d6ef97ea175029e8dac030aa68b35d24157b434024",
       "reason": "Invented canary string in inert parser request validation fixture; no filesystem or live runtime evidence is read."
+    },
+    {
+      "path": "tests/test_mcp_adapter.py",
+      "rule": "credential_literal",
+      "match_sha256": "cefc2d5a7832e5af2d69905f5559a02370210c4f3b0ff8feaf285820944374f2",
+      "reason": "Synthetic private worker configuration fixture; independently reviewed, never a live credential."
+    },
+    {
+      "path": "tests/test_docker_sources.py",
+      "rule": "credential_literal",
+      "match_sha256": "e1d59006d4ae182319dda41be6c3c7367f950b55fda45fc19f90f026bf98c519",
+      "reason": "Inert bearer fixture proving registry authorization is removed on redirects; mocked opener only."
+    },
+    {
+      "path": "tests/test_docker_sources.py",
+      "rule": "credential_literal",
+      "match_sha256": "b4802a70a0228d7929de97bdd5e6f9b981f7dfc8ef81429c45b168db618d5b76",
+      "reason": "Synthetic anonymous-auth response token in in-memory HTTP and trickling-body fixtures."
+    },
+    {
+      "path": "tests/test_docker_sources.py",
+      "rule": "credential_literal",
+      "match_sha256": "940f6c7b8f3de58e781426644ba491a29ed359ec263a8a2d2403087f55c6b90f",
+      "reason": "Synthetic matching access_token field in a mocked anonymous-auth response."
+    },
+    {
+      "path": "tests/test_docker_sources.py",
+      "rule": "credential_literal",
+      "match_sha256": "8a2eeac48adca1060b0d481d1e4d0285df3e54d40438c77b8cd89d8e6aa1d248",
+      "reason": "Synthetic conflicting access_token field used to prove anonymous-auth response refusal."
     }
   ]
 }

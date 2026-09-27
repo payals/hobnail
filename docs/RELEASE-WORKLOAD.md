@@ -5,7 +5,7 @@
 This workload delivers a current inventory of the new sanitized public-export
 repository for the release package preflight and a self-contained HTML view. It
 does not inventory the private development history, certify publication, or
-activate live applications. The owner supplies the selected export commit and an
+activate an external application. The owner supplies the selected export commit and an
 owned, exact filesystem snapshot of that commit. The candidate is selected only
 after the release source lanes are complete.
 

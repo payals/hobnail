@@ -88,12 +88,13 @@ def build_sdist(sdist_directory, config_settings=None):
     destination.mkdir(parents=True, exist_ok=True)
     paths = [path for path in (_ROOT / "src" / "hobnail").rglob("*.py") if "__pycache__" not in path.parts]
     paths.extend(_ROOT / name for name in ("pyproject.toml", "build_backend.py", "README.md", "LICENSE", "SECURITY.md", "AGENTS.md", "CONTRIBUTING.md", "VISION.md", "PLAN.md", "WORKLOG.md", "install.sql", "pg_hba.example") if (_ROOT / name).is_file())
+    paths.extend(_ROOT / name for name in ("security/mcp-dependencies.json", "release/private-portable-tests.json") if (_ROOT / name).is_file())
     # The wheel is the Python SDK. The source distribution additionally contains
     # the SQL/runtime setup and its documentation and verification suite.
-    source_suffixes = {".py", ".sql", ".sh", ".md", ".html", ".txt", ".json", ".toml"}
-    for folder in ("docs", "migrations", "schema", "scripts", "tests", "skills"):
+    source_suffixes = {".py", ".sql", ".sh", ".md", ".html", ".txt", ".json", ".toml", ".lock"}
+    for folder in ("docs", "migrations", "schema", "scripts", "tests", "skills", "integrations"):
         paths.extend(path for path in (_ROOT / folder).rglob("*")
-                     if path.is_file() and not path.is_symlink() and path.suffix in source_suffixes
+                     if path.is_file() and not path.is_symlink() and (path.suffix in source_suffixes or path.name == "LICENSE")
                      and not {"out", "__pycache__"}.intersection(path.relative_to(_ROOT).parts))
     public_manifest = _ROOT / "PUBLIC-SOURCE.json"
     if public_manifest.exists():
