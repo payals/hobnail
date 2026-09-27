@@ -2,7 +2,7 @@
 
 The supervisor is trusted and owns all generated credentials. This is a bounded
 native macOS qualification, not production storage, human key custody, Docker,
-or live Looper/Rag activation. Failures and private runtime data are retained.
+or live application activation. Failures and private runtime data are retained.
 """
 from __future__ import annotations
 
@@ -130,7 +130,7 @@ class Qualification:
             "reference_design_commit": "7622044", "checks": {}, "cleanup": [],
             "limits": ["Native macOS only; Docker not qualified", "Trusted same-user supervisor",
                 "Single-node file backend, not production storage", "No separate human share custody or memory-locking claim",
-                "Controlled faults are explicitly injected around actual operations", "No live Looper/Rag activation"]}
+                "Controlled faults are explicitly injected around actual operations", "No live application activation"]}
         self.stage = "allocated"
         self.receipt["source_identity"] = self.source_identity()
         self.receipt["configuration_sha256"] = hashlib.sha256(self.runtime.config_file.read_bytes()).hexdigest()

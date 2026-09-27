@@ -287,7 +287,7 @@ implementation change, renewed artifact/feature review and actual qualification.
 The initial consequence is `file.publish`, with a separately mounted observer.
 The same layout can cover create-only `research.promote` when its exact registry
 consumer is exercised. Git requires its own explicit reviewed executable and
-effective-control preflight; neither Git nor a live Looper/Rag deployment is
+effective-control preflight; neither Git nor a live application deployment is
 covered merely because the file path succeeds.
 
 ## Observed reference result

@@ -55,9 +55,6 @@ EXCLUDED_GROUPS = {
     "approved_openbao": (
         "Requires the exact owner-approved reviewed OpenBao artifact and exclusive native runtime.",
         ("test_openbao_runtime.py",)),
-    "adjacent_project": (
-        "Uses private adjacent-project evidence or native pilot prerequisites; outside this public source profile.",
-        ("test_looper_maintenance_pilot.py", "test_looper_report_pilot.py", "test_rag_native_pilot.py")),
     "distribution": (
         "Separate offline package verification against its complete declared source/archive profile.",
         ("test_verify_distribution.py",)),

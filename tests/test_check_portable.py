@@ -41,7 +41,7 @@ class PortableProfileTests(unittest.TestCase):
         excluded = {Path(row["file"]).name: row for row in report["nonselected"]}
         self.assertTrue(excluded["test_openbao_runtime.py"]["present"])
         self.assertFalse(excluded["test_openbao_runtime.py"]["selected"])
-        self.assertFalse(excluded["test_looper_report_pilot.py"]["present"])
+        self.assertFalse(excluded["test_recovery.py"]["present"])
         self.assertEqual(report["unclassified"], [])
 
     def test_unknown_top_level_and_nested_modules_refuse(self):
