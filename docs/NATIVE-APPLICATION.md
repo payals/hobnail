@@ -19,6 +19,16 @@ Run from the Hobnail repository using its existing project `.venv`, PostgreSQL
 `python3 -m venv .venv`; no third-party package installation is needed. The
 output directory below is newly created and retained. Historical native checks
 used Python 3.14 and PostgreSQL 18.3; the public candidate needs its own checks.
+The same example is built into the helper, so this runs it directly:
+
+```sh
+.venv/bin/python scripts/native_application.py
+```
+
+It prints the final `status`, the private `receipt` path and the published
+`output` path, and exits 0 only for `completed`. The script is otherwise a
+library: import `NativeApplication` as below to run your own contract and
+artifact.
 
 ```sh
 PYTHONPATH=src .venv/bin/python - <<'PY'

@@ -42,6 +42,7 @@ SELECTED = {
     "test_docker_qualification_unit.py": "Qualification, probe and cleanup fixtures with controlled runtime/SQL interfaces.",
     "test_verify_public_distribution.py": "Standard public archives and tamper checks built from first-party temporary source fixtures.",
     "test_check_portable.py": "Runner refusal/receipt and CI bootstrap validation fixtures.",
+    "test_demo_cli.py": "Demo command-line summaries and retained-root pruning with controlled receipts and synthetic marked directories; no PostgreSQL or native runtime.",
 }
 EXCLUDED_GROUPS = {
     "postgresql": (

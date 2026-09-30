@@ -46,6 +46,27 @@ credentials and stopping their own servers. An expected refusal is evidence
 only when its positive control and cause are established. Read the receipt's
 effect and cleanup states rather than only the shell exit status.
 
+The local demo prints a short summary: each scenario's
+`expected_outcome_observed`, the retained root and the path of the complete JSON
+receipt (`evidence.json`). `--json` prints that receipt on stdout instead.
+
+Retained roots are not deleted automatically; each demo root is about 50 MB,
+mostly the stopped cluster's database files. List, then remove, stopped roots
+that the development cluster helper marked as yours (direct `hbn-*` children of
+`/tmp`, or of `--base-dir`):
+
+```sh
+.venv/bin/python scripts/dev_cluster.py prune                      # list only; nothing changes
+.venv/bin/python scripts/dev_cluster.py prune --data-only --delete # drop database files, keep receipts/logs
+.venv/bin/python scripts/dev_cluster.py prune --older-than-hours 72 --delete
+```
+
+By default only roots untouched for 24 hours are selected; an age below one hour
+also needs `--force`. Pruning skips roots without this user's valid ownership
+marker and roots that are running, not cleanly stopped, not fully initialized or
+started within the last hour (stop a running one with `dev_cluster.py stop
+ROOT`). Delete a root only after you no longer need its evidence.
+
 To supply your own contract and bytes, use
 [NativeApplication](NATIVE-APPLICATION.md). The owner remains responsible for
 independent acquisition of trusted facts and for sufficient validation meaning.

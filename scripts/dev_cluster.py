@@ -13,6 +13,10 @@ isolation or production-authentication recipe.
 
 CLI: ``python scripts/dev_cluster.py create`` prints the owned root and socket;
 ``status ROOT`` and ``stop ROOT`` only inspect/stop that marked cluster.
+``prune`` lists stopped, ownership-marked ``hbn-*`` roots under ``--base-dir``
+(default /tmp) untouched for ``--older-than-hours`` (default 24) with their
+sizes; only ``prune --delete`` removes them, and ``--data-only`` removes just
+their database files, keeping receipts and logs.
 """
 
 from __future__ import annotations
@@ -27,6 +31,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
+import time
 from typing import Any
 import uuid
 
@@ -400,6 +405,90 @@ class DevCluster:
             original.add_note(f"Cluster cleanup also failed; logs retained at {self.root}: {cleanup_error}")
 
 
+def _tree_bytes(root: Path) -> int:
+    total = 0
+    for directory, _subdirectories, files in os.walk(root, followlinks=False):
+        for name in files:
+            try:
+                total += (Path(directory) / name).lstat().st_size
+            except OSError:
+                pass
+    return total
+
+
+PRUNE_DEFAULT_HOURS = 24.0
+PRUNE_MINIMUM_HOURS = 1.0
+
+
+def prune(base_dir: str | Path = "/tmp", *, older_than_hours: float = PRUNE_DEFAULT_HOURS, delete: bool = False,
+          data_only: bool = False, force: bool = False, now: float | None = None) -> list[dict[str, Any]]:
+    """List, and with ``delete`` remove, stopped roots this user's DevCluster created.
+
+    Only direct ``hbn-*`` children of ``base_dir`` with a valid ownership marker
+    for the current user are candidates. A root with a postmaster.pid, a recorded
+    running pid, an unfinished initialization or a start within the last hour is
+    never touched, and no PostgreSQL binary is needed. A root may still be in use
+    shortly after its server stops (a demo writes evidence then), so an age floor
+    below one hour requires ``force``.
+    """
+    if older_than_hours < PRUNE_MINIMUM_HOURS and not force:
+        raise ClusterError(f"--older-than-hours below {PRUNE_MINIMUM_HOURS:g} can remove a root that is still in use; add --force")
+    base = Path(base_dir).resolve(strict=True)
+    if not shutil.rmtree.avoids_symlink_attacks:
+        raise ClusterError("this platform's rmtree is not symlink-safe; refusing to prune")
+    now = time.time() if now is None else now
+    results: list[dict[str, Any]] = []
+    for root in sorted(base.iterdir()):
+        if not root.name.startswith("hbn-") or root.is_symlink() or not root.is_dir():
+            continue
+        entry: dict[str, Any] = {"root": str(root)}
+        results.append(entry)
+        probe = DevCluster.__new__(DevCluster)
+        probe.root, probe.data_dir = root, root / "data"
+        try:
+            marker = probe._read_marker()
+        except ClusterError:
+            entry.update(action="skipped", reason="no valid ownership marker for this user")
+            continue
+        if marker.get("pid") is not None or (probe.data_dir / "postmaster.pid").exists() \
+                or (probe.data_dir / "postmaster.pid").is_symlink():
+            entry.update(action="skipped", reason="running or not cleanly stopped; use: dev_cluster.py stop ROOT")
+            continue
+        if marker.get("initialized") is not True:
+            entry.update(action="skipped", reason="initialization not recorded as finished")
+            continue
+        started = marker.get("started_at")
+        try:
+            recently_started = started is not None and now - float(started) < 3600
+        except (TypeError, ValueError):
+            recently_started = True  # unreadable start time: treat as possibly in use
+        if recently_started:
+            entry.update(action="skipped", reason="started within the last hour")
+            continue
+        age_hours = (now - max(root.lstat().st_mtime, (root / MARKER).lstat().st_mtime)) / 3600
+        target = probe.data_dir if data_only else root
+        entry.update(bytes=_tree_bytes(root), age_hours=round(age_hours, 2),
+                      reclaim_bytes=_tree_bytes(target) if target.exists() else 0)
+        if age_hours < older_than_hours:
+            entry.update(action="skipped", reason=f"newer than {older_than_hours:g} hours")
+            continue
+        if data_only and not target.exists():
+            entry.update(action="skipped", reason="no database files left")
+            continue
+        if not delete:
+            entry["action"] = "would_delete_data" if data_only else "would_delete"
+            continue
+        try:
+            probe._read_marker()  # re-check ownership immediately before removal
+            if (probe.data_dir / "postmaster.pid").exists():
+                raise ClusterError("started while pruning")
+            shutil.rmtree(target)
+            entry["action"] = "deleted_data" if data_only else "deleted"
+        except (ClusterError, OSError) as error:
+            entry.update(action="failed", reason=type(error).__name__)
+    return results
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -410,7 +499,29 @@ def main(argv: list[str] | None = None) -> int:
         subcommand = commands.add_parser(command)
         subcommand.add_argument("root")
         subcommand.add_argument("--bin-dir")
+    pruner = commands.add_parser("prune", help="list (default) or --delete stopped owned hbn-* roots")
+    pruner.add_argument("--base-dir", default="/tmp")
+    pruner.add_argument("--older-than-hours", type=float, default=PRUNE_DEFAULT_HOURS,
+                        help=f"only roots untouched for this long (default {PRUNE_DEFAULT_HOURS:g}; below "
+                             f"{PRUNE_MINIMUM_HOURS:g} needs --force)")
+    pruner.add_argument("--force", action="store_true", help="allow an age floor below one hour")
+    pruner.add_argument("--data-only", action="store_true",
+                        help="remove only each root's data/ directory; keep evidence, logs and outputs")
+    pruner.add_argument("--delete", action="store_true", help="actually remove; without it nothing changes")
     arguments = parser.parse_args(argv)
+    if arguments.command == "prune":
+        try:
+            entries = prune(arguments.base_dir, older_than_hours=arguments.older_than_hours,
+                            delete=arguments.delete, data_only=arguments.data_only, force=arguments.force)
+        except (ClusterError, OSError) as error:
+            print(json.dumps({"error": str(error)}))
+            return 1
+        selected = [e for e in entries if e["action"] not in {"skipped"}]
+        print(json.dumps({"base_dir": str(Path(arguments.base_dir).resolve()), "dry_run": not arguments.delete,
+                          "data_only": arguments.data_only, "roots": entries,
+                          "older_than_hours": arguments.older_than_hours,
+                          "selected_bytes": sum(e.get("reclaim_bytes", 0) for e in selected)}, indent=2, sort_keys=True))
+        return 1 if any(e["action"] == "failed" for e in entries) else 0
     cluster: DevCluster | None = None
     try:
         if arguments.command == "create":

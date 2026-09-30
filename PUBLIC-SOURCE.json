@@ -138,6 +138,7 @@
     "tests/test_credential_kernel.py",
     "tests/test_credential_recovery.py",
     "tests/test_credentials.py",
+    "tests/test_demo_cli.py",
     "tests/test_dev_cluster.py",
     "tests/test_docker_entrypoints.py",
     "tests/test_docker_policy.py",

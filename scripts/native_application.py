@@ -5,10 +5,19 @@ contract, then supplies exact input/artifact bytes for one protected workflow.
 The context retires generated credentials, stops only its owned PostgreSQL
 runtime and retains a private application receipt. This is not a daemon, a
 persistent mission-budget namespace or a reusable deployment qualification seal.
+
+Import ``NativeApplication`` to run your own contract and artifact; see
+docs/NATIVE-APPLICATION.md. Running this file executes that document's
+warehouse example on a fresh owned cluster and prints its status, receipt and
+published output path:
+
+    .venv/bin/python scripts/native_application.py
 """
 from __future__ import annotations
 
+import argparse
 from contextlib import ExitStack
+from datetime import datetime, timedelta, timezone
 from dataclasses import asdict
 import hashlib
 import json
@@ -353,3 +362,66 @@ class NativeApplication:
             self._failure("caller", exception)
         self._shutdown()
         return False
+
+
+def run_example() -> dict[str, Any]:
+    """The warehouse example from docs/NATIVE-APPLICATION.md, unchanged in substance."""
+    output = Path(tempfile.mkdtemp(prefix="warehouse-publication-")).resolve()
+    trusted_warehouse = b'{"stock":7}'
+    report = b'{"available":7,"label":"Warehouse report"}'
+
+    with NativeApplication(
+        "warehouse-workflow", NativeConsumer.file(output), sources=("warehouse",)
+    ) as application:
+        actors = application.principals
+        plugins = application.plugin_digests
+        contract = {
+            "schema_version": 1,
+            "description": "Match the report quantity to the owner-supplied warehouse snapshot",
+            "access": {
+                "workers": [actors["worker"]],
+                "verifiers": [actors["verifier"]],
+                "observers": [actors["observer"]],
+                "adapters": {"release": [actors["adapter"]]},
+            },
+            "subject": {"media_type": "application/json", "max_bytes": 1048576},
+            "sources": [{"name": "warehouse", "registrars": [actors["registrar"]], "require_current": True}],
+            "checks": [{
+                "id": "quantity", "plugin": "json.equals", "plugin_digest": plugins["json.equals"],
+                "parameters": {"source": "warehouse", "pairs": [{"artifact": "/available", "input": "/stock"}]},
+                "max_age_seconds": 300,
+            }],
+            "actions": [{
+                "name": "release", "plugin": "file.publish", "plugin_digest": plugins["file.publish"],
+                "target": "warehouse-report.json", "arguments": {}, "max_age_seconds": 300,
+            }],
+            "budgets": {"verification": 2, "effects": 1},
+            "expires_at": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat().replace("+00:00", "Z"),
+        }
+        approval = application.approve(contract)
+        if approval.get("ok") is not True:
+            raise NativeApplicationError("owner_contract_activation_refused")
+        application.run(document=contract, inputs={"warehouse": trusted_warehouse},
+                        artifact=report, action="release")
+
+    # Read the final receipt after context exit: cleanup can invalidate the result.
+    return {"status": application.receipt["status"], "receipt": application.receipt["receipt"],
+            "output": str(output / "warehouse-report.json")}
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Requires PostgreSQL 18 binaries on PATH and the macOS sandbox-exec backend, like local_demo.py.")
+    parser.parse_args(argv)
+    try:
+        result = run_example()
+    except NativeApplicationError as error:
+        print(json.dumps({"status": "refused", "code": error.code}, indent=2))
+        return 1
+    print(json.dumps(result, indent=2))
+    return 0 if result["status"] == "completed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

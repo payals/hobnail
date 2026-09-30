@@ -1,37 +1,71 @@
 # Hobnail
 
-**Approve exact agent work, control its side effects, and verify what happened.**
+**A PostgreSQL gate between what an AI agent says it did and what actually happens.**
+
+Coding agents report "done" all the time. A claim is not evidence. When agent
+output feeds something real, such as a published report or a commit to a
+repository, you need a decision made outside the agent about what is allowed to
+take effect. Hobnail is that decision point. It is a PostgreSQL control plane
+plus a small, dependency-free Python SDK. An agent's work must pass through four
+steps: a snapshot of the exact bytes, the checks you declared in advance, a
+verdict from a separate verifier, and a recorded effect confirmed by a separate
+observer. Every step is written to an append-only, hash-chained audit ledger.
 
 **For coding agents:** start with [AGENTS.md](AGENTS.md), then the
-[agent guide](docs/AGENT-GUIDE.md). The optional [authoring skill](skills/hobnail/SKILL.md)
-helps prepare contracts; it does not grant execution authority.
+[agent guide](docs/AGENT-GUIDE.md).
 
-Hobnail lets an application require evidence before accepting or publishing an
-agent's output. You define a **contract**: the required checks, trusted inputs
-and permitted actions. A worker submits the output, an authorized verifier
-checks it, and PostgreSQL decides whether that exact work can proceed. A
-separate observer then confirms the action actually happened.
+## What it does in one picture
 
-Existing agent tools retain planning and coordination. Hobnail supplies a
-PostgreSQL control plane, standard-library Python SDK, bounded validators and
-protected file, local Git and research-record consumers. Applications own their
-contracts, trusted source acquisition and validation meaning.
+```text
+ worker            verifier            adapter              observer
+ (the agent)       (separate role)     (separate role)      (separate role)
+    |                  |                   |                    |
+    | submit exact     |                   |                    |
+    | bytes + input    |                   |                    |
+    | snapshots        |                   |                    |
+    |---> candidate -->| run every         |                    |
+    |                  | declared check    |                    |
+    |                  |---> accepted? ----|                    |
+    | request the      |                   |                    |
+    | approved action -------------------->| record dispatch,   |
+    |                  |                   | then write the     |
+    |                  |                   | file or commit --->| look at the real
+    |                  |                   |                    | result; record
+    |                  |                   |                    | complete or not
+```
 
-**Bring your preferred coding agent.** Connect through the optional MCP server,
-Python SDK or JSON CLI, using an interface your client supports. Subscription
-access, API billing and local-model operation stay with your existing tools and
-provider terms. The core needs no model-provider account and receives no model
-credentials. Optional hosted advice integrations are separate choices.
+PostgreSQL makes each decision in one function, `hobnail.api(op, payload)`. It
+maps the database login to a registered role and refuses anything that role may
+not do. An action produces three separate records:
 
-Hobnail is public at [payals/hobnail](https://github.com/payals/hobnail).
-Report security issues through the enabled
-[private vulnerability reporting form](https://github.com/payals/hobnail/security/advisories/new);
-see [SECURITY.md](SECURITY.md) for the reporting and support policy.
+- **Authorization.** The worker asks for an action the contract already approved, on accepted work.
+- **Dispatch.** The adapter commits a durable "about to act" record before touching anything outside the database.
+- **Observation.** A different observer checks the real file or commit. Only a matching observation marks the effect `complete`.
 
-## Install the SDK and CLI
+An adapter reporting success is not completion. A timeout leaves the outcome
+unknown until someone observes it. There is no automatic retry.
 
-On **macOS or Linux**, start with Git and Python **3.11+**. From a directory
-where you want a new checkout:
+## What it refuses
+
+Each refusal is a stable code from the database API or a named adapter error:
+
+- **`SELF_JUDGING`**: the principal that submitted work tries to verify it, or observe its own effect.
+- **`MISSING_CHECKS`**: acceptance or an action is requested before every declared check has a result.
+- **`CHECK_FAILED`**: any check came back `fail`, `error` or `inconclusive`. Only `pass` counts.
+- **`INPUT_STALE`**: the trusted input changed after the check ran, so the old verdict no longer applies.
+- **`EVIDENCE_STALE`**: a check result, or an approved action's time window, is older than the contract allows.
+- **`ACTION_MISMATCH`**: the requested action or its arguments differ from what the contract approved.
+- **`FORBIDDEN`** or **`SCOPE_MISMATCH`**: a worker tries to activate a contract, register inputs, or act outside its scope.
+- **`POLICY_INACTIVE`**: the contract version was replaced. Older candidates are no longer eligible.
+- **`BUDGET_EXHAUSTED`**: the contract's cap on verification runs or effects is used up.
+- **Path outside the contract**: the Git adapter refuses with "artifact paths differ from approved paths". It also refuses deletions, renames, symlinks, hooks and a dirty worktree.
+
+The full list is in the [protocol reference](docs/CONTRACT.md#stable-refusal-codes).
+
+## Try it in five minutes
+
+You need Git and Python 3.11 or newer. The workflow demos also need macOS and
+PostgreSQL 18 binaries (`initdb`, `postgres`, `psql`, `pg_ctl`) on `PATH`.
 
 ```sh
 git clone https://github.com/payals/hobnail.git
@@ -41,133 +75,124 @@ python3 -m venv .venv
 .venv/bin/hobnail --help
 ```
 
-This installs from the cloned source without downloading build or runtime
-packages. Reuse an existing `.venv` if you already have one. Keep the checkout:
-workflow scripts and database migrations are source tools, not part of the
-installed SDK wheel. [Full installation and troubleshooting](docs/INSTALLATION.md)
-explains prerequisites, platform differences and expected output.
+This installs from the checkout and downloads nothing. Keep the checkout: the
+scripts and database migrations are not part of the installed package.
 
-Try the installed SDK without PostgreSQL:
+**1. Portable checks (macOS or Linux, no database).**
 
 ```sh
-.venv/bin/python -I - <<'PYCODE'
-from hobnail import discover
-
-suggestions = discover(b'{"total":7}')
-print("Authoritative:", suggestions["authoritative"])
-print("Suggested checks:", ", ".join(item["plugin"] for item in suggestions["suggestions"]))
-PYCODE
+.venv/bin/python scripts/check_portable.py
 ```
 
-It prints `Authoritative: False` and suggests `bytes.sha256` and
-`json.required_fields`. Suggestions help you author a contract; they do not
-approve work or prove the example's value is correct.
+It prints a JSON receipt with `"status": "passed"` and the number of tests
+run. This proves the SDK and adapters behave on your machine. It does not test
+PostgreSQL or the macOS sandbox.
 
-## Run a complete workflow on macOS
-
-With PostgreSQL **18** binaries (`initdb`, `postgres`, `psql`, `pg_ctl`) on `PATH`:
+**2. Local demo (macOS, PostgreSQL 18).**
 
 ```sh
 .venv/bin/python scripts/local_demo.py
 ```
 
-The demo runs an accepted report and two rejection cases, creates and stops its
-own database, and prints `"run_status": "completed"` and `"runtime_stopped": true`
-when its checks pass. It uses synthetic inputs and a trusted demo controller.
-See the [step-by-step native example](docs/INSTALLATION.md#3-run-an-accepted-workflow-and-two-refusals-on-macos)
-for binary checks and help interpreting the receipt.
+It creates its own database, runs three scenarios, and stops the database. It
+prints:
 
-| Platform | Available path |
-| --- | --- |
-| macOS | SDK/CLI, portable tests, and the PostgreSQL 18 native demo/role workflow. |
-| Linux | SDK/CLI and portable source tests. The macOS native helpers do not run here. |
-| Docker | Assemble the exact Linux ARM64 reference from pinned public inputs, then run its owned qualification. No prebuilt image or Compose service is published. [Docker instructions](docs/INSTALLATION.md#linux-and-docker). |
-| Native Windows | Not supported by the current onboarding/runtime matrix. WSL2 is not separately tested. |
+```text
+Hobnail local demo: completed (runtime stopped)
+Scenarios:
+  happy        expected_outcome_observed=true   destination written: yes
+  bad_content  expected_outcome_observed=true   destination written: no
+  stale_input  expected_outcome_observed=true   destination written: no
+```
 
-An ordinary `docker run postgres` command does not create a Hobnail deployment.
-The [support matrix](docs/SUPPORT.md) names the tested configurations and limits.
+A correct report is published. A wrong report is refused with `CHECK_FAILED`.
+A report whose input changed after checking is refused with `INPUT_STALE`. The
+full receipt stays in a temporary directory the command prints. This proves the
+database gate works. It does not prove process isolation, because one trusted
+demo controller holds every synthetic role's credentials.
 
-## How the database gate works
+**3. Qualified local run (macOS, PostgreSQL 18).**
 
-The maintained entry point is `hobnail.api(op text, payload jsonb)`, with
-operation-specific validation and PostgreSQL role/scope enforcement. State
-changes and their audit record share a transaction; the SDK commits each call
-independently. Protected Python
-verifiers perform content checks; the database rechecks exact evidence and
-current authority before acceptance. External actions require separate
-observation and are not part of a PostgreSQL transaction.
+```sh
+.venv/bin/python scripts/qualified_local.py
+```
 
-The optional [Hobnail MCP adapter](docs/MCP.md) gives existing agents seven
-worker tools over stdio. It uses a configured database-verified worker identity;
-verification, approval and effect services remain separate. Its dependency lock
-and installation are separate from the core SDK above.
+It runs each role as its own sandboxed process with password (SCRAM) logins. It
+prints a JSON receipt with `"status": "passed"` and `"runtime_stopped": true`.
+Each role shows that it could not read peers' configuration, reach the
+administrator, or open other network connections. This proves role separation
+in this tested configuration only. The script takes no options.
 
-[Typed SQL functions](docs/TYPED-SQL.md) call the same enforced API. Immutable
-proofs bind acceptance to its passing check set while preserving historical
-receipts after later input or policy changes. The earlier `work`/`eval` schema
-is a separate legacy example.
-[Architecture and extension points](docs/ARCHITECTURE.md) explains what is
-implemented, what can be extended, and the distinction from that example.
+**4. MCP prerequisite check (network access to PyPI and OSV).**
+
+```sh
+.venv/bin/python scripts/check_mcp_dependencies.py
+```
+
+The optional MCP server has a pinned, reviewed dependency lock. This command
+checks that lock for your interpreter and platform against current PyPI metadata
+and known advisories. It installs nothing and prints `"status": "passed"` and
+`"installed": false`. It refuses when there is no reviewed lock for your setup.
+Installing the package and running `scripts/mcp_demo.py` are covered in the
+[MCP guide](docs/MCP.md).
+
+Each demo keeps its stopped database and logs for inspection. To list them, run
+`.venv/bin/python scripts/dev_cluster.py prune`. Add `--delete` to remove them.
 
 ## Run your own work
 
-The [complete application example](docs/NATIVE-APPLICATION.md) accepts an
-owner-authored protocol-1 contract, trusted input bytes and an exact candidate.
-The trusted supervisor explicitly approves the contract. A separate verifier
-checks it, an adapter performs the authorized effect, and a separate observer
-records the result. Read the final receipt after context exit: cleanup failures
-can invalidate success. Unknown effects require reconciliation, not a new key
-and blind redispatch.
+**The contract.** You write a JSON document per workflow. It names who may act
+in each role, the media type and size of the output, the trusted input sources,
+the checks that must all pass, and the exact actions allowed. An action has a
+fixed target and fixed arguments, such as one file name or an exact list of Git
+paths on an exact base commit. The contract also sets budgets and an expiry. A
+worker may propose a contract. Only a separate approver can activate it.
 
-The [protocol](docs/CONTRACT.md) defines the API and refusal semantics.
-[Operations](docs/OPERATIONS.md) covers installation, checks and recovery.
-[Native deployment](docs/NATIVE-DEPLOYMENT.md) describes the trusted host and
-supervisor boundary. [Dependency review](docs/DEPENDENCIES.md) and the
-[OpenBao reference](docs/OPENBAO-REFERENCE.md) distinguish reviewed artifacts,
-historical qualification and unresolved applicability limits.
+**The roles.**
 
-## Working with coding agents
+- **Worker**: the agent. It submits output and requests approved actions. It cannot judge or publish.
+- **Registrar**: supplies the trusted input snapshots that checks compare against.
+- **Verifier**: runs the declared checks in a restricted process and records one result per check.
+- **Adapter**: performs the approved action, a file publication or a local Git commit, after recording dispatch.
+- **Observer**: independently inspects the real result and records whether it matches.
+- **Approver**: activates contract versions. The worker never holds this role.
 
-Use [AGENTS.md](AGENTS.md) as the repository instruction entry point and
-[the agent guide](docs/AGENT-GUIDE.md) for workflow and evidence requirements.
-Give an untrusted worker only its scoped interface; a Python object handed to
-unrestricted code is not an isolation boundary. Suggestions and generated
-contracts remain proposals until an authorized independent approver activates
-them. The [optional skill](skills/hobnail/SKILL.md) assists authoring; it does not
-grant credentials or policy authority.
+**Entry points.**
 
-## CI and delivery
+- **Python SDK**: `hobnail.Client` calls any operation your role allows. `hobnail.discover` suggests checks from sample output, but suggestions never activate anything.
+- **CLI**: `hobnail call`, `validate`, `coverage` and `discover`.
+- **MCP**: seven worker-only tools over stdio for agents that speak MCP. There is no raw SQL and no approval tool.
+- **Native application**: `.venv/bin/python scripts/native_application.py` runs one complete supervised workflow on macOS and prints its status and receipt.
 
-[GitHub Actions](https://github.com/payals/hobnail/actions) runs portable checks
-and the source/history security scan on pushes and pull requests. It also checks
-the pinned MCP dependency set, installs the optional package from verified
-wheels, and exercises the actual stdio protocol with a synthetic transport.
-Database and native application consequences have separate integration checks.
-The security workflow has a weekly Monday 06:37 UTC schedule. Dependabot covers
-core and optional Python manifests and GitHub Actions version-update proposals.
+Read next:
 
-There is **no automatic deployment, PyPI publication, Docker image push or
-GitHub release workflow**. CodeQL, GitHub dependency-graph review and the
-proposed branch rules are separate configurations, not implied by a green CI
-run. [Current CI/CD and maintenance details](docs/MAINTENANCE.md) distinguishes
-active checks from proposals and runtime qualifications.
+- [Protocol and contract format](docs/CONTRACT.md)
+- [Complete application example](docs/NATIVE-APPLICATION.md)
+- [MCP worker adapter](docs/MCP.md)
+- [Local Git commit adapter](docs/GIT-ADAPTER.md)
+- [Operations and recovery](docs/OPERATIONS.md)
+- [Installation and troubleshooting](docs/INSTALLATION.md)
+- [Architecture](docs/ARCHITECTURE.md)
 
-## Contributing and licensing
+## What it is not
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the current contribution phase and
-verification instructions, and use the [PR template](.github/PULL_REQUEST_TEMPLATE.md)
-for concrete problem/result, scoped changes, exact checks and compatibility or
-security implications. Human and agent contributors follow the same review
-requirements; omit secrets, private logs/transcripts, system paths and unrelated
-generated state. No public test total is inferred from the private
-development suite; the selected export omits private application integrations.
-See [maintenance controls](docs/MAINTENANCE.md) for the prepared branch rules,
-Dependabot and scheduled checks, and [optional maintenance triage](docs/MAINTENANCE-TRIAGE.md)
-for Jev's advisory-only role. Committed configuration is not evidence that a
-GitHub setting or scheduled job is active.
-Legacy SQL and expected-output fixtures are retained for reference and recovery
-checks. They are not maintained protocol-1 installation instructions. Use
-`scripts/install.py`, not the legacy root `install.sql`.
+- **Not an agent sandbox.** Hobnail confines its own role processes and validators. It does not confine the agent's shell, files or network. If the agent can write the destination directly, it can bypass Hobnail. Remove that access.
+- **Not protection from a compromised administrator.** The database administrator, the schema owner, the supervisor process and the approved checker and adapter code are trusted.
+- **Not proof that a check is complete.** A passing check proves only what it declares. An approved but incomplete contract is still incomplete.
+- **Not a claim of qualification for your deployment.** Results cover the tested combinations in the [support matrix](docs/SUPPORT.md): PostgreSQL 18 (18.3 native, 18.6 in Docker) and Python 3.14. Python 3.11 or newer is the compatibility target, but not every version is tested.
+- **Native workflows are macOS only.** Linux runs the SDK, CLI and portable checks. Native Windows is not supported, and WSL2 is not tested.
+- **Docker is a reference, not a product.** You can assemble the exact Linux ARM64 reference from pinned inputs and run its qualification. No image is published, and a plain `docker run postgres` is not a Hobnail deployment. See [installation](docs/INSTALLATION.md#linux-and-docker).
+- **Not exactly-once.** External actions are outside a PostgreSQL transaction. Unknown outcomes need reconciliation, not a blind retry.
 
-Hobnail is [MIT licensed](LICENSE). Preserve its existing attribution and notice.
-No third-party executable or container image is bundled or relicensed here.
+## Security, support and license
+
+Report security issues through the
+[private vulnerability reporting form](https://github.com/payals/hobnail/security/advisories/new).
+Do not put exploit details or credentials in a public issue. [SECURITY.md](SECURITY.md)
+describes the trust boundaries and what a useful report contains.
+[SUPPORT.md](docs/SUPPORT.md) lists tested configurations and the compatibility
+policy. There is no support SLA. See [CONTRIBUTING.md](CONTRIBUTING.md) to
+contribute.
+
+Hobnail is [MIT licensed](LICENSE). No third-party executable or container image
+is bundled.

@@ -120,12 +120,20 @@ From the checkout root with the SDK environment created in step 1:
 
 The default `all` scenario runs an accepted report, a report with an incorrect
 order count, and a stale-input refusal. Successful execution exits with code 0
-and prints a JSON receipt containing `"run_status": "completed"` and
-`"runtime_stopped": true`. Expected refusals are successful demo controls;
-a runtime error still makes the command fail.
+and prints a short summary: the run status, each scenario with
+`expected_outcome_observed` and whether its destination was written, the
+retained root and the path of the complete JSON receipt (`evidence.json`, with
+`"run_status": "completed"` and `"runtime_stopped": true`). Add `--json` to print
+the complete receipt on stdout instead. Expected refusals are successful demo
+controls; a runtime error still makes the command fail.
 
 The demo creates and stops its own private PostgreSQL cluster and retains its
-receipt and output paths for inspection. It does not use a shared/default
+receipt and output paths for inspection; nothing is deleted automatically.
+Each retained `/tmp/hbn-*` root is about 50 MB. `.venv/bin/python
+scripts/dev_cluster.py prune` lists stopped roots you own, and adding
+`--delete` removes those untouched for 24 hours (optionally `--data-only`, or
+another `--older-than-hours N`);
+see [operations](OPERATIONS.md). It does not use a shared/default
 database or discover personal credentials. Keep its generated receipts and
 runtime directories private. The input is synthetic and one trusted controller
 holds the demo credentials; this is not a production deployment qualification.

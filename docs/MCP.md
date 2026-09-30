@@ -99,6 +99,34 @@ replacing the lock with a bare `pip install fastmcp`. A new dependency profile
 needs its own review. Core-only users can continue using the offline SDK install
 in [the installation guide](INSTALLATION.md#1-install-the-sdk-and-command).
 
+### Re-review a lock after an advisory
+
+When a pinned package gains a known advisory, the check fails with
+`pypi_known_vulnerability_record` or `known_vulnerability_record`. Its JSON
+output and receipt list each affected package and pinned version, the advisory
+ids and aliases, and any fixed-in versions; a short summary is printed on
+standard error. Only identifiers that match strict patterns are copied from
+the registry, never advisory prose. The optional installation stays blocked.
+
+Fix it with a recorded lock re-review, not a hand edit:
+
+1. Choose the fixed release. Its wheel must be at least 168 hours old; a younger
+   security fix needs the owner's explicit advisory exception (see
+   [maintenance](MAINTENANCE.md#dependabot-and-artifact-review)).
+2. Review the new wheel the way the original lock was reviewed: download it
+   into memory, match its SHA-256 and size to PyPI metadata, verify every
+   `RECORD` hash, confirm there are no `.pth`, `sitecustomize`/`usercustomize`
+   or `.data/scripts` members, record registry-served provenance, and compare
+   `Requires-Dist`/`Requires-Python` with the reviewed version. A changed
+   dependency set needs a new closure review for every profile.
+3. Update every affected `integrations/mcp/requirements-*.lock`, the package
+   entry and each profile's `lock_sha256` in `security/mcp-dependencies.json`,
+   and add a dated entry under `review.updates` describing the evidence.
+4. Rerun `scripts/check_mcp_dependencies.py --profile <name>` for every profile
+   and the portable tests. Commit the change on its own, labelled as a
+   dependency review; merging it still needs the independent review described
+   in [maintenance](MAINTENANCE.md).
+
 ## Run the complete protected workflow on macOS
 
 After the optional package installation, run this from the checkout root on

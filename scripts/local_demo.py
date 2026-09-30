@@ -3,8 +3,10 @@
 
     python3 scripts/local_demo.py
     python3 scripts/local_demo.py --scenario bad_content
+    python3 scripts/local_demo.py --json      # print the complete receipt instead of a summary
 
-The JSON receipt names actual acceptance, refusal and file consequences. The
+The JSON receipt names actual acceptance, refusal and file consequences; it is
+written to evidence.json in the retained root and summarized on stdout. The
 cluster always stops; its private data directory, logs, outputs and receipt stay
 available for inspection. No existing database or user credentials are used.
 One trusted demo controller holds the synthetic service credentials; distinct
@@ -419,12 +421,43 @@ def run_demo(scenarios: tuple[str, ...] = SCENARIOS, *, base_dir: str | Path = "
     return evidence
 
 
+def summarize(receipt: dict[str, Any]) -> str:
+    """A short human-readable view of a receipt; the complete receipt is evidence.json."""
+    stopped = receipt.get("runtime_stopped")
+    lines = [f"Hobnail local demo: {receipt.get('run_status', 'unknown')}"
+             f" (runtime {'stopped' if stopped else 'NOT confirmed stopped'})"]
+    if receipt.get("failure"):
+        lines.append(f"Failure: stage {receipt['failure'].get('stage')} ({receipt['failure'].get('kind')})")
+    if receipt.get("cleanup_failure"):
+        lines.append(f"Cleanup failure: {receipt['cleanup_failure'].get('kind')}")
+    lines.append("Scenarios:")
+    for scenario in receipt.get("scenarios", []):
+        written = (scenario.get("consequence") or {}).get("exists")
+        lines.append(f"  {scenario.get('scenario', '?'):<12} expected_outcome_observed="
+                     f"{str(scenario.get('expected_outcome_observed')).lower():<5}  destination written: "
+                     f"{'yes' if written else 'no' if written is False else 'unknown'}")
+    if not receipt.get("scenarios"):
+        lines.append("  (none recorded)")
+    lines.append(f"Retained root: {receipt.get('retained_root', '(not allocated)')}")
+    lines.append(f"Full receipt:  {receipt.get('evidence_file', '(not written)')}")
+    lines.append("The retained root keeps the stopped cluster, logs and outputs; nothing is deleted automatically.")
+    lines.append("Print the full receipt with --json. List retained roots to prune with:"
+                 " .venv/bin/python scripts/dev_cluster.py prune")
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--scenario", choices=(*SCENARIOS, "all"), default="all")
+    parser.add_argument("--json", action="store_true",
+                        help="print the complete JSON receipt on stdout (the previous default output)")
     args = parser.parse_args(argv)
     receipt = run_demo(SCENARIOS if args.scenario == "all" else (args.scenario,))
-    print(json.dumps(receipt, sort_keys=True, allow_nan=False))
+    if args.json or "evidence_file" not in receipt:
+        # Without an evidence file the receipt exists only here, so print all of it.
+        print(json.dumps(receipt, sort_keys=True, allow_nan=False))
+    else:
+        print(summarize(receipt))
     return 0 if receipt["run_status"] == "completed" and receipt.get("runtime_stopped") else 1
 
 

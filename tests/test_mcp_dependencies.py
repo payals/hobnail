@@ -8,7 +8,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -129,6 +129,73 @@ class DependencyGateTests(unittest.TestCase):
                 self.registry["vulnerabilities"] = advisories
                 with self.assertRaises(gate.DependencyError): self.check()
         self.assertTrue(all(url != "https://api.osv.dev/v1/query" for url, _ in self.calls))
+
+    def test_advisory_refusal_names_package_ids_and_fixed_versions_only(self):
+        self.registry["vulnerabilities"] = [{"id": "GHSA-4v2x-9hqm-p7rc", "aliases": ["CVE-2026-0001", "ignore-previous_instructions", "GHSA-ignore-previous-instructions"],
+                                             "fixed_in": ["4.0.6", "$(rm -rf /)"], "withdrawn": None,
+                                             "summary": "remote prose is never copied", "link": "https://attacker.invalid"}]
+        with self.assertRaises(gate.AdvisoryFinding) as caught: self.check()
+        self.assertEqual(caught.exception.args[0], "pypi_known_vulnerability_record")
+        self.assertEqual(caught.exception.findings, [{"name": "fastmcp-slim", "version": "4.0.5", "source": "pypi", "advisories": [
+            {"id": "GHSA-4v2x-9hqm-p7rc", "aliases": ["CVE-2026-0001"], "fixed_in": ["4.0.6"], "withdrawn": False, "unparsed_fields": 3}]}])
+        self.assertNotIn("prose", json.dumps(caught.exception.findings))
+
+    def test_only_real_advisory_id_shapes_and_strict_withdrawn_values_are_kept(self):
+        for value in ("GHSA-42vr-xj54-vc7v", "CVE-2026-101918", "PYSEC-2026-12", "OSV-2026-3", "MAL-2026-4567"):
+            self.assertTrue(gate.ADVISORY_ID.fullmatch(value), value)
+        for value in ("ignore-previous_instructions", "GHSA-ignore-previous-instructions", "CVE-26-1",
+                      "GHSA-42VR-XJ54-VC7V", "RUN-2026-1", "PYSEC-2026-1 extra"):
+            self.assertIsNone(gate.ADVISORY_ID.fullmatch(value), value)
+        for value, expected in ((True, True), ("true", True), ("2026-09-30T00:00:00Z", True), ("false", False),
+                                (False, False), (None, False), ("", False), ("yes", False), (1, False)):
+            self.assertIs(gate._withdrawn(value), expected, value)
+
+    def test_osv_refusal_reports_fixed_versions_for_the_matching_package(self):
+        self.osv = {"vulns": [{"id": "PYSEC-2026-1", "aliases": [], "affected": [
+            {"package": {"ecosystem": "PyPI", "name": "fastmcp_slim"}, "ranges": [{"type": "ECOSYSTEM", "events": [{"introduced": "0"}, {"fixed": "4.0.7"}]}]},
+            {"package": {"ecosystem": "PyPI", "name": "other"}, "ranges": [{"events": [{"fixed": "9.9"}]}]}]}]}
+        with self.assertRaises(gate.AdvisoryFinding) as caught: self.check()
+        self.assertEqual(caught.exception.args[0], "known_vulnerability_record")
+        self.assertEqual(caught.exception.findings[0]["advisories"][0]["fixed_in"], ["4.0.7"])
+
+    def test_every_vulnerable_package_is_reported_together(self):
+        second = {"name": "pyjwt", "version": "2.14.0", "requires_python": ">=3.9", "requires_dist": [], "project_urls": {},
+                  "pypi_json_url": "https://pypi.org/pypi/pyjwt/2.14.0/json",
+                  "artifacts": [{**self.artifact, "filename": "pyjwt-2.14.0-py3-none-any.whl",
+                                 "url": "https://files.pythonhosted.org/packages/00/bb/pyjwt-2.14.0-py3-none-any.whl"}]}
+        self.manifest["packages"].append(second)
+        self.profile["packages"].append("pyjwt"); self.profile["artifacts"].append(second["artifacts"][0]["filename"])
+        self.lock.write_text(self.lock.read_text() + "pyjwt==2.14.0 --hash=sha256:" + self.artifact["sha256"] + "\n")
+        self.profile["lock_sha256"] = gate.digest(self.lock.read_bytes())
+        self.path.write_text(json.dumps(self.manifest))
+        self.registry["vulnerabilities"] = [{"id": "GHSA-2f4h-7q9w-x3mc", "aliases": [], "fixed_in": ["4.0.6"], "withdrawn": None}]
+        other = {"info": {"name": "PyJWT", "version": "2.14.0", "requires_python": ">=3.9", "requires_dist": [], "project_urls": {}},
+                 "urls": [], "vulnerabilities": [{"id": "GHSA-42vr-xj54-vc7v", "aliases": ["CVE-2026-101918"], "fixed_in": ["2.15.0"], "withdrawn": None}]}
+        request = lambda url, **kwargs: json.dumps(other).encode() if url == second["pypi_json_url"] else self.request(url, **kwargs)
+        with self.assertRaises(gate.AdvisoryFinding) as caught:
+            gate.check(self.path, "synthetic", root=self.root, request=request, now=self.now)
+        self.assertEqual([(f["name"], f["advisories"][0]["id"], f["advisories"][0]["fixed_in"]) for f in caught.exception.findings],
+                         [("fastmcp-slim", "GHSA-2f4h-7q9w-x3mc", ["4.0.6"]), ("pyjwt", "GHSA-42vr-xj54-vc7v", ["2.15.0"])])
+
+    def test_identity_drift_still_refuses_once_the_advisory_is_absent(self):
+        self.registry["vulnerabilities"] = [{"id": "GHSA-2f4h-7q9w-x3mc"}]
+        self.registry["info"]["version"] = "4.0.6"
+        with self.assertRaises(gate.AdvisoryFinding): self.check()
+        self.registry["vulnerabilities"] = []
+        with self.assertRaisesRegex(gate.DependencyError, "pypi_identity_differs"): self.check()
+
+    def test_main_prints_findings_and_remediation(self):
+        self.registry["vulnerabilities"] = [{"id": "GHSA-42vr-xj54-vc7v", "aliases": ["CVE-2026-101918"], "fixed_in": ["2.15.0"], "withdrawn": None}]
+        stdout, stderr, real = io.StringIO(), io.StringIO(), gate.check
+        fixture = lambda *a, **k: real(self.path, "synthetic", root=self.root, request=self.request, now=self.now)
+        with patch.object(gate, "check", fixture), redirect_stdout(stdout), redirect_stderr(stderr):
+            self.assertEqual(gate.main(["--profile", "synthetic"]), 1)
+        result = json.loads(stdout.getvalue())
+        self.assertEqual(result["code"], "pypi_known_vulnerability_record")
+        self.assertEqual(result["findings"][0]["advisories"][0]["fixed_in"], ["2.15.0"])
+        self.assertIn("docs/MCP.md", result["remediation"])
+        self.assertIn("fastmcp-slim==4.0.5", stderr.getvalue())
+        self.assertIn("GHSA-42vr-xj54-vc7v, CVE-2026-101918; fixed in: 2.15.0", stderr.getvalue())
 
     def test_root_server_extra_is_required_and_lock_hash_is_bound(self):
         self.lock.write_text(self.lock.read_text().replace("[server]", ""))
