@@ -2418,7 +2418,7 @@
       "artifacts": [
         {
           "binary_members": [],
-          "filename": "pyjwt-2.14.0-py3-none-any.whl",
+          "filename": "pyjwt-2.15.0-py3-none-any.whl",
           "provenance": {
             "publishers": [
               {
@@ -2428,18 +2428,18 @@
                 "workflow": "pypi-package.yml"
               }
             ],
-            "sha256": "2969d1af6c4dad5f61e02cf5f04e34224d1b0cc2d88fc0413f95de7481003eed",
+            "sha256": "6647a025d9809a94a14de2851ec843114fae2f4f371218426d3527544d7157cb",
             "signature_verified": false,
             "status": "present",
             "subject_digest_matches": true,
-            "url": "https://pypi.org/integrity/PyJWT/2.14.0/pyjwt-2.14.0-py3-none-any.whl/provenance"
+            "url": "https://pypi.org/integrity/PyJWT/2.15.0/pyjwt-2.15.0-py3-none-any.whl/provenance"
           },
           "record_hashes_verified": true,
-          "sha256": "ad0cef71c756a56e74863c2919cf0985f72decbcfcb550ee2f422e7c62b5eedc",
-          "size": 32896,
+          "sha256": "7a3742debf6b879e912dbb9819ceec1594be812452b78c5f2e2dfc56564954f8",
+          "size": 33680,
           "startup_hooks": [],
-          "uploaded_at": "2026-09-11T13:11:53.409243Z",
-          "url": "https://files.pythonhosted.org/packages/9c/97/672cb32ce0dfea44b740cb7b4f97038463b9cf7c0ead1aacf595572851d6/pyjwt-2.14.0-py3-none-any.whl"
+          "uploaded_at": "2026-09-23T16:55:59.241512Z",
+          "url": "https://files.pythonhosted.org/packages/e8/55/40e45bf052ee8ee12a4dfd785519660f8effa7b065442b91646ec6828619/pyjwt-2.15.0-py3-none-any.whl"
         }
       ],
       "license_expression": "MIT",
@@ -2448,13 +2448,13 @@
       "project_urls": {
         "Homepage": "https://github.com/jpadilla/pyjwt"
       },
-      "pypi_json_url": "https://pypi.org/pypi/pyjwt/2.14.0/json",
+      "pypi_json_url": "https://pypi.org/pypi/pyjwt/2.15.0/json",
       "requires_dist": [
         "typing_extensions>=4.0; python_version < \"3.11\"",
         "cryptography>=3.4.0; extra == \"crypto\""
       ],
       "requires_python": ">=3.9",
-      "version": "2.14.0"
+      "version": "2.15.0"
     },
     {
       "artifacts": [
@@ -3547,7 +3547,7 @@
         "pydantic_core-2.46.5-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
         "pydantic_settings-2.15.0-py3-none-any.whl",
         "pygments-2.21.0-py3-none-any.whl",
-        "pyjwt-2.14.0-py3-none-any.whl",
+        "pyjwt-2.15.0-py3-none-any.whl",
         "pyperclip-1.11.0-py3-none-any.whl",
         "python_dotenv-1.2.3-py3-none-any.whl",
         "python_multipart-0.0.32-py3-none-any.whl",
@@ -3568,7 +3568,7 @@
         "websockets-17.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl"
       ],
       "compatibility": "Exact wheel tags and marker-aware dependency closure reviewed; runtime execution is separate evidence.",
-      "lock_sha256": "64249f11adff322573ba15b4da2239adca2242a604ff110f7504a0506ecacee2",
+      "lock_sha256": "3bed2089d7984d827cba6f74dd64ad3b356bf3f460d162a5bd32031415dbeebf",
       "lockfile": "integrations/mcp/requirements-linux-arm64-py314.lock",
       "machine": "aarch64",
       "marker_environment": {
@@ -3705,7 +3705,7 @@
         "pydantic_core-2.46.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
         "pydantic_settings-2.15.0-py3-none-any.whl",
         "pygments-2.21.0-py3-none-any.whl",
-        "pyjwt-2.14.0-py3-none-any.whl",
+        "pyjwt-2.15.0-py3-none-any.whl",
         "pyperclip-1.11.0-py3-none-any.whl",
         "python_dotenv-1.2.3-py3-none-any.whl",
         "python_multipart-0.0.32-py3-none-any.whl",
@@ -3726,7 +3726,7 @@
         "websockets-17.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
       ],
       "compatibility": "Exact wheel tags and marker-aware dependency closure reviewed; runtime execution is separate evidence.",
-      "lock_sha256": "81349044eb0b4b3ce1ed3fef1c032d385543b5c8577f3cb20ff1372ef07f0042",
+      "lock_sha256": "0b070ddeac9ca8fa0ad6f4e44254544d5ac1888964db49b559a4a854800fd449",
       "lockfile": "integrations/mcp/requirements-linux-x86_64-py312.lock",
       "machine": "x86_64",
       "marker_environment": {
@@ -3863,7 +3863,7 @@
         "pydantic_core-2.46.5-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
         "pydantic_settings-2.15.0-py3-none-any.whl",
         "pygments-2.21.0-py3-none-any.whl",
-        "pyjwt-2.14.0-py3-none-any.whl",
+        "pyjwt-2.15.0-py3-none-any.whl",
         "pyperclip-1.11.0-py3-none-any.whl",
         "python_dotenv-1.2.3-py3-none-any.whl",
         "python_multipart-0.0.32-py3-none-any.whl",
@@ -3884,7 +3884,7 @@
         "websockets-17.1-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
       ],
       "compatibility": "Exact wheel tags and marker-aware dependency closure reviewed; runtime execution is separate evidence.",
-      "lock_sha256": "b561192f71e89b1581e1da573907eb2f70d876207262d7331f86b61b5dbe07a2",
+      "lock_sha256": "8894401d5b28bfff4ac09be068e926e69c97351fd3bc766c84bd27ee841ffbc0",
       "lockfile": "integrations/mcp/requirements-linux-x86_64-py314.lock",
       "machine": "x86_64",
       "marker_environment": {
@@ -4020,7 +4020,7 @@
         "pydantic_core-2.46.5-cp314-cp314-macosx_11_0_arm64.whl",
         "pydantic_settings-2.15.0-py3-none-any.whl",
         "pygments-2.21.0-py3-none-any.whl",
-        "pyjwt-2.14.0-py3-none-any.whl",
+        "pyjwt-2.15.0-py3-none-any.whl",
         "pyperclip-1.11.0-py3-none-any.whl",
         "python_dotenv-1.2.3-py3-none-any.whl",
         "python_multipart-0.0.32-py3-none-any.whl",
@@ -4040,7 +4040,7 @@
         "websockets-17.1-cp314-cp314-macosx_11_0_arm64.whl"
       ],
       "compatibility": "Exact wheel tags and marker-aware dependency closure reviewed; runtime execution is separate evidence.",
-      "lock_sha256": "e088026bd2b6a374be911e5efc6bc79e111874184ccf96ec4c17c94d842e1e92",
+      "lock_sha256": "5879b6447f8a558c09945374fca35235cc73b1b0a7794de74cb51a3cb73862f1",
       "lockfile": "integrations/mcp/requirements-macos-arm64-py314.lock",
       "machine": "arm64",
       "marker_environment": {
@@ -4160,7 +4160,28 @@
     "provenance_review": "Canonical registry metadata, declared source ownership and available registry-served provenance subjects reviewed. Missing attestations are explicit; no Sigstore signature verification or reproducible source-build claim.",
     "registry": "https://pypi.org/",
     "runtime_features": "FastMCP imports Settings with cwd .env by default; the adapter must set FASTMCP_ENV_FILE to the null device before import, force telemetry off, and avoid credential stores, OAuth, HTTP transports, proxies and filesystem caches.",
-    "scope": "Optional fixed-worker stdio adapter; core Hobnail remains free of third-party dependencies."
+    "scope": "Optional fixed-worker stdio adapter; core Hobnail remains free of third-party dependencies.",
+    "updates": [
+      {
+        "advisory_review": "PyPI vulnerabilities and OSV query for pyjwt 2.15.0 were empty on 2026-09-30; point-in-time evidence only.",
+        "age": "Uploaded 2026-09-23T16:55:59.241512Z; 172.413 hours old at review, meeting the 168-hour minimum without an exception.",
+        "approval": "Prepared for independent owner/code-owner review; not an approval or merge.",
+        "artifact_review": "Wheel downloaded into memory; SHA-256 and size matched PyPI metadata; all 19 RECORD hashes verified; no .pth, sitecustomize/usercustomize, .data/scripts or binary members; no package code executed or archive extracted.",
+        "date": "2026-09-30",
+        "from": "2.14.0",
+        "metadata_review": "Requires-Dist, Requires-Python, project URLs and license expression identical to reviewed 2.14.0, so the dependency closure is unchanged for every profile; the reviewed dependents' constraints (mcp pyjwt[crypto]>=2.10.1; fastmcp-slim azure extra pyjwt>=2.12.0, not selected) admit 2.15.0.",
+        "package": "pyjwt",
+        "profiles": [
+          "linux-arm64-py314",
+          "linux-x86_64-py312",
+          "linux-x86_64-py314",
+          "macos-arm64-py314"
+        ],
+        "provenance_review": "Registry-served provenance present from GitHub jpadilla/pyjwt workflow pypi-package.yml (environment release-pypi); subject digest matches; no Sigstore signature verification.",
+        "reason": "PyPI and OSV list GHSA-42vr-xj54-vc7v (CVE-2026-101918) for pyjwt 2.14.0 with fixed_in 2.15.0; pyjwt is transitive via mcp (pyjwt[crypto]>=2.10.1) under fastmcp-slim[server]==4.0.5.",
+        "to": "2.15.0"
+      }
+    ]
   },
   "reviewed_at": "2026-09-27T18:49:21.901993+00:00",
   "root_requirement": "fastmcp-slim[server]==4.0.5",
